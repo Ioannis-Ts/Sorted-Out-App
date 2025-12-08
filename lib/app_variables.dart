@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+class AppImages{
+
+static const String background = 'assets/images/background.png';
+
+}
+
 class AppColors {
   AppColors._(); 
 

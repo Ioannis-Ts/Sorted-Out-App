@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_variables.dart'; // προσαρμόσέ το αν το αρχείο λέγεται αλλιώς
+import '../app_variables.dart'; // προσαρμόσέ το αν το αρχείο λέγεται αλλιώς
 
 class EventThumbnail extends StatelessWidget {
   final String title;
