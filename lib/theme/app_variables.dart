@@ -30,7 +30,7 @@ class AppColors {
   static const Color anotherGrey = Color(0xFF535252);
 
   // Our Yellow Color
-  static const Color ouryellow = Color(0xFFFFFAE2);
+  static const Color ourYellow = Color(0xFFFFFAE2);
 
   // ======== ΒΟΗΘΗΤΙΚΑ (μπορούμε να τα προσαρμόσουμε αργότερα) ========
 
@@ -44,7 +44,7 @@ class AppTexts {
   /// Γενικός τίτλος
   static const TextStyle generalTitle = TextStyle(
     fontSize: 20,
-    fontWeight: FontWeight.w700, // bold
+    fontWeight: FontWeight.w700,
     color: AppColors.textMain,
     fontFamily: 'IstokWeb',
   );
