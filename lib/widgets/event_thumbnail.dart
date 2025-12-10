@@ -87,7 +87,7 @@ class EventThumbnail extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: imageUrl != null
+                      child: (imageUrl != null && imageUrl!.isNotEmpty)
                           ? Image.network(
                               imageUrl!,
                               fit: BoxFit.cover,

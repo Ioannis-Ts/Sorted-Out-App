@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'theme/app_variables.dart';
 import 'widgets/event_thumbnail.dart';
 import 'widgets/main_nav_bar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'models/event_model.dart';
+import 'event_details_page.dart';
+
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -21,7 +25,7 @@ class _EventsPageState extends State<EventsPage> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/background.png'),
+                image: AssetImage(AppImages.background),
                 fit: BoxFit.cover,
               ),
             ),
@@ -46,44 +50,48 @@ class _EventsPageState extends State<EventsPage> {
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                        EventThumbnail(
-                          title: 'Awareness Day',
-                          location: 'Ntafou Park, NY',
-                          date: DateTime(2026, 2, 12),
-                        ),
-                      ],
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('Events')
+                          .orderBy('date')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        if (snapshot.hasError) {
+                          return const Center(child: Text('Error loading events'));
+                        }
+
+                        final docs = snapshot.data?.docs ?? [];
+
+                        if (docs.isEmpty) {
+                          return const Center(child: Text('No events yet'));
+                        }
+
+                        final events = docs.map((d) => EventModel.fromDoc(d)).toList();
+
+                        return ListView.builder(
+                          itemCount: events.length,
+                          itemBuilder: (context, index) {
+                            final e = events[index];
+                            return EventThumbnail(
+                              title: e.title,
+                              location: e.location,
+                              date: e.date,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => EventDetailsPage(event: e),
+                                  ),
+                                );
+                              },
+                              imageUrl: e.imageUrls.isNotEmpty ? e.imageUrls.first : null,
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ],
