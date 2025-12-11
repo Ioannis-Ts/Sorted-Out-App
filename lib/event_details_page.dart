@@ -17,13 +17,63 @@ class EventDetailsPage extends StatelessWidget {
     return '$day/$month/$year - $hour:$minute';
   }
 
+  // WIDGET: Το στατικό Header (παραμένει το ίδιο)
+  Widget _buildHeader(BuildContext context) {
+    final dateStr = _formatDateTime(event.date);
+
+    // Το SafeArea διασφαλίζει ότι το header δεν κρύβεται πίσω από την εγκοπή (notch)
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Row(
+          children: [
+            // Κουμπί Πίσω (Είναι ήδη μέσα στο header)
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            const SizedBox(width: 8),
+            // Τίτλος και Ημερομηνία/Τοποθεσία στο κέντρο
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    event.title,
+                    style: AppTexts.generalTitle.copyWith(
+                      fontSize: 22,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${event.location} - $dateStr',
+                    style: AppTexts.generalBody.copyWith(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            // Κενό για να ισοσταθμίσει το IconButton αριστερά
+            const SizedBox(width: 48), 
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateStr = _formatDateTime(event.date);
+    // 💡 Αλλάξτε αυτό το ύψος αν το header σας είναι ψηλότερο ή κοντύτερο.
+    const double staticHeaderHeight = 100.0; 
 
     return Scaffold(
       body: Stack(
         children: [
+          // 1. Background Image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -33,60 +83,23 @@ class EventDetailsPage extends StatelessWidget {
             ),
           ),
 
-          // 🔹 περιεχόμενο
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 67),
-              child: SingleChildScrollView(
+          // 2. Scrollable Περιεχόμενο (ξεκινάει κάτω από το Header)
+          Positioned.fill(
+            top: staticHeaderHeight, 
+            bottom: 67, // Το ύψος της bottom nav bar
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // header με back + τίτλο
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                event.title,
-                                style: AppTexts.generalTitle.copyWith(
-                                  fontSize: 22,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${event.location} - $dateStr',
-                                style: AppTexts.generalBody.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
                     Center(
                       child: Text(
                         'Description',
                         style: AppTexts.generalTitle.copyWith(fontSize: 16),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     // description box
                     Container(
                       width: double.infinity,
@@ -107,18 +120,14 @@ class EventDetailsPage extends StatelessWidget {
                         style: AppTexts.generalBody.copyWith(fontSize: 14),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     Center(
                       child: Text(
                         'Pictures',
                         style: AppTexts.generalTitle.copyWith(fontSize: 16),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -128,13 +137,22 @@ class EventDetailsPage extends StatelessWidget {
                       ),
                       child: _buildPicturesGrid(context),
                     ),
+                    const SizedBox(height: 24), 
                   ],
                 ),
-              )
+              ),
             ),
           ),
-
-          // 🔹 bottom nav bar (όλα inactive)
+          
+          // 3. Στατικό Header (Η ΔΙΟΡΘΩΣΗ ΕΙΝΑΙ ΕΔΩ)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildHeader(context),
+          ),
+          
+          // 4. Bottom nav bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -150,35 +168,34 @@ class EventDetailsPage extends StatelessWidget {
       ),
     );
   }
-
+  
+  // Κώδικας _buildPicturesGrid...
   Widget _buildPicturesGrid(BuildContext context) {
-  final images = event.imageUrls.take(4).toList(); // μέχρι 4
+    final images = event.imageUrls.take(4).toList(); 
 
-  if (images.isEmpty) {
-    // Αν δεν έχει εικόνες, δεν εμφανίζουμε τίποτα
-    return const SizedBox.shrink();
+    if (images.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(), 
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
+      itemCount: images.length,
+      itemBuilder: (context, index) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            images[index],
+            fit: BoxFit.cover,
+          ),
+        );
+      },
+    );
   }
-
-  return GridView.builder(
-    shrinkWrap: true, // Βεβαιωνόμαστε ότι το GridView δεν θα καταλάβει όλο το διαθέσιμο χώρο
-    physics: const NeverScrollableScrollPhysics(), // Απενεργοποιούμε το scroll του GridView, γιατί υπάρχει ήδη το scrollable της σελίδας
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2, // Δύο εικόνες ανά γραμμή
-      crossAxisSpacing: 12, // Απόσταση ανάμεσα στις εικόνες
-      mainAxisSpacing: 12,  // Απόσταση ανάμεσα στις γραμμές
-      childAspectRatio: 1,  // Κάνουμε τις εικόνες τετράγωνες
-    ),
-    itemCount: images.length,
-    itemBuilder: (context, index) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          images[index],
-          fit: BoxFit.cover,  // Εικόνα που θα γεμίσει το πλαίσιο χωρίς να χάσει την αναλογία της
-        ),
-      );
-    },
-  );
 }
-}
-

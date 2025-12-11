@@ -5,6 +5,7 @@ import 'widgets/main_nav_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/event_model.dart';
 import 'event_details_page.dart';
+import 'create_event_page.dart';
 
 
 class EventsPage extends StatefulWidget {
@@ -38,7 +39,7 @@ class _EventsPageState extends State<EventsPage> {
                 0,
                 24,
                 0,
-                140, // χώρος για + και nav bar
+                150, // χώρος για + και nav bar
               ),
               child: Column(
                 children: [
@@ -101,13 +102,17 @@ class _EventsPageState extends State<EventsPage> {
 
           // ΚΟΥΜΠΙ "+"
           Positioned(
-            bottom: 72, // ακριβώς πάνω από το nav bar
+            bottom: 82, // ακριβώς πάνω από το nav bar
             left: 0,
             right: 0,
             child: Center(
               child: GestureDetector(
                 onTap: () {
-                  // TODO: create-event
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CreateEventPage(),
+                    ),
+                  );
                 },
                 child: Container(
                   width: 64,
