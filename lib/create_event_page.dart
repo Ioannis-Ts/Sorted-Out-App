@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'theme/app_variables.dart';
 import 'widgets/main_nav_bar.dart';
 
+
 class CreateEventPage extends StatefulWidget {
   @override
   _CreateEventPageState createState() => _CreateEventPageState();
@@ -12,9 +13,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
-  List<String> _imageUrls = [];
+
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+
+  List<String> _imageUrls = List.filled(4, '');
 
   bool _isEditingTitle = false;
   bool _isEditingLocation = false;
@@ -23,25 +26,38 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   // Δημιουργία Event στο Firestore
   Future<void> _createEvent() async {
-    final title = _titleController.text;
-    final location = _locationController.text;
-    final description = _descriptionController.text;
+    final title = _titleController.text.trim();
+    final location = _locationController.text.trim();
+    final description = _descriptionController.text.trim();
 
-    if (title.isEmpty || location.isEmpty || description.isEmpty) {
+    // ✅ require date+time too
+    if (title.isEmpty ||
+        location.isEmpty ||
+        description.isEmpty ||
+        _selectedDate == null ||
+        _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields!')),
+        const SnackBar(content: Text('Please fill: Title, Location, Date, Time, Description')),
       );
       return;
     }
+
+    // ✅ combine date + time into one DateTime
+    final eventDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
 
     try {
       await FirebaseFirestore.instance.collection('Events').add({
         'title': title,
         'location': location,
-        'date': Timestamp.fromDate(_selectedDate),
-        'time': '${_selectedTime.hour}:${_selectedTime.minute}',
+        'date': Timestamp.fromDate(eventDateTime), // ✅ stores both date+time
         'description': description,
-        'imageUrls': _imageUrls,
+        'imageUrls': _imageUrls.where((e) => e.trim().isNotEmpty).toList(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,16 +71,22 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
+  void _setImageAtSlot(int slotIndex, String url) {
+    setState(() {
+      _imageUrls[slotIndex] = url;
+    });
+  }
+
   // Επιλογή ημερομηνίας
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _selectedDate ?? DateTime.now(), // ✅
       firstDate: DateTime(2020),
       lastDate: DateTime(2101),
     );
 
-    if (pickedDate != null && pickedDate != _selectedDate) {
+    if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
         _isEditingDate = false;
@@ -76,10 +98,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: _selectedTime ?? TimeOfDay.now(), // ✅
     );
 
-    if (pickedTime != null && pickedTime != _selectedTime) {
+    if (pickedTime != null) {
       setState(() {
         _selectedTime = pickedTime;
         _isEditingTime = false;
@@ -87,8 +109,46 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
+Future<void> _onAddImagePressed(int slotIndex) async {
+  final url = await _pickUrlDialog();
+  if (url != null && url.isNotEmpty) _setImageAtSlot(slotIndex, url);
+}
+
+Future<String?> _pickUrlDialog() async {
+  final controller = TextEditingController();
+
+  final url = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Paste image URL'),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(hintText: 'https://...'),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, controller.text.trim()),
+          child: const Text('Add'),
+        ),
+      ],
+    ),
+  );
+
+  return url?.trim();
+}
+
+
   @override
   Widget build(BuildContext context) {
+    final dateText = (_selectedDate == null)
+        ? 'Date'
+        : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}';
+
+    final timeText = (_selectedTime == null)
+        ? 'Time'
+        : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+
     return Scaffold(
       body: Stack(
         children: [
@@ -101,7 +161,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
               ),
             ),
           ),
-          
+
           // Το περιεχόμενο
           SafeArea(
             child: Column(
@@ -139,7 +199,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     ],
                   ),
                 ),
-                
+
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16.0),
@@ -224,33 +284,50 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                       ),
                               ),
                             ),
-                            
+
                             Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
-                            
-                            // Ημερομηνία
+
+                            // Ημερομηνία (✅ shows "Date" until selected)
                             GestureDetector(
-                              onTap: () => _selectDate(context),
+                              onTap: () async {
+                                await _selectDate(context);
+                                if (_selectedDate != null) {
+                                  await _selectTime(context);
+                                }
+                              },
                               child: Text(
-                                '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                style: AppTexts.generalBody.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+                                dateText,
+                                style: AppTexts.generalBody.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                            
+
                             Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
-                            
-                            // Ώρα
+
+                            // Ώρα (✅ shows "Time" until selected)
                             GestureDetector(
-                              onTap: () => _selectTime(context),
+                              onTap: () async {
+                                if (_selectedDate == null) {
+                                  await _selectDate(context);
+                                  if (_selectedDate == null) return;
+                                }
+                                await _selectTime(context);
+                              },
                               child: Text(
-                                '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                                style: AppTexts.generalBody.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+                                timeText,
+                                style: AppTexts.generalBody.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         // "Description" label
                         Text(
                           'Description',
@@ -259,7 +336,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
 
                         // Περιγραφή του event (κίτρινο κουτί)
@@ -287,7 +364,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 20),
 
                         // "Pictures" label
@@ -298,7 +375,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
 
                         // Φωτογραφίες (κίτρινο κουτί με 4 + buttons)
@@ -314,24 +391,24 @@ class _CreateEventPageState extends State<CreateEventPage> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  _buildAddPhotoBox(),
+                                  _buildAddPhotoBox(0),
                                   const SizedBox(width: 16),
-                                  _buildAddPhotoBox(),
+                                  _buildAddPhotoBox(1),
                                 ],
                               ),
                               const SizedBox(height: 16),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  _buildAddPhotoBox(),
+                                  _buildAddPhotoBox(2),
                                   const SizedBox(width: 16),
-                                  _buildAddPhotoBox(),
+                                  _buildAddPhotoBox(3),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 80), // Διάστημα για το navigation bar
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -344,52 +421,54 @@ class _CreateEventPageState extends State<CreateEventPage> {
       bottomNavigationBar: MainNavBar(
         currentIndex: null,
         onTabSelected: (index) {
-          // Handle navigation based on index
-          // 0 = AI, 1 = Home, 2 = Map
           if (index == 1) {
-            Navigator.pop(context); // Go back to home
+            Navigator.pop(context);
           }
-          // Add other navigation logic here
         },
       ),
     );
   }
 
   // Widget για τα κουτιά προσθήκης φωτογραφιών
-  Widget _buildAddPhotoBox() {
-    return Expanded(
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: AppColors.grey,
-              width: 2,
-              style: BorderStyle.solid,
-            ),
+  Widget _buildAddPhotoBox(int slotIndex) {
+  final url = _imageUrls[slotIndex].trim();
+  final hasUrl = url.isNotEmpty;
+
+  return Expanded(
+    child: AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.grey, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _onAddImagePressed(slotIndex),
             borderRadius: BorderRadius.circular(8),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // TODO: Implement image picker
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Image picker not implemented yet')),
-                );
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: const Center(
-                child: Icon(
-                  Icons.add,
-                  size: 40,
-                  color: AppColors.grey,
-                ),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: hasUrl
+                  ? Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.broken_image, size: 32, color: AppColors.grey),
+                      ),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                    )
+                  : const Center(
+                      child: Icon(Icons.add, size: 40, color: AppColors.grey),
+                    ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
