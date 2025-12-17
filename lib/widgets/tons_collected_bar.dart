@@ -14,7 +14,7 @@ class TonsCollectedBar extends StatelessWidget {
   });
 
   String _formatNumber(num n) {
-    // 35.098.500 style (simple)
+    // 35.098.500 style
     final s = n.round().toString();
     final buf = StringBuffer();
     for (int i = 0; i < s.length; i++) {
@@ -34,13 +34,13 @@ class TonsCollectedBar extends StatelessWidget {
       children: [
         Text(
           year.toString(),
-          style: AppTexts.generalTitle.copyWith(fontSize: 18),
+          style: AppTexts.generalTitle.copyWith(fontSize: 14),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6), // Slightly reduced spacing
 
-        // ✅ Full-width pill πάντα ίδιο μέγεθος
+        // ✅ Full-width pill, sleeker height
         Container(
-          height: 40,
+          height: 30, // Reduced from 35
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.75),
             borderRadius: BorderRadius.circular(22),
@@ -54,32 +54,35 @@ class TonsCollectedBar extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12), // Removed large vertical padding
             child: Row(
               children: [
                 // bar area
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // background track (full)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGrey.withOpacity(0.55),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-
-                      // ✅ fill (shorter for smaller value)
-                      FractionallySizedBox(
-                        widthFactor: ratio,
-                        child: Container(
+                  child: SizedBox(
+                    height: 8, // ✅ Explicitly thinner bar (the "outer gray area")
+                    child: Stack(
+                      children: [
+                        // background track (full)
+                        Container(
                           decoration: BoxDecoration(
-                            color: AppColors.main.withOpacity(0.85),
+                            color: AppColors.lightGrey.withOpacity(0.55),
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                      ),
-                    ],
+
+                        // ✅ fill
+                        FractionallySizedBox(
+                          widthFactor: ratio,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.main.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -88,7 +91,8 @@ class TonsCollectedBar extends StatelessWidget {
                 Text(
                   _formatNumber(tons),
                   style: AppTexts.generalTitle.copyWith(
-                    fontSize: 16,
+                    fontSize: 12, // ✅ Smaller font size
+                    fontWeight: FontWeight.w600, // ✅ Boldness ensures visibility
                     color: AppColors.textMain,
                   ),
                 ),

@@ -37,6 +37,7 @@ class TreeProgressButton extends StatelessWidget {
         final idx = _treeIndex(progress);
         final asset = 'assets/images/tree$idx.png';
 
+        // While loading, show a standard spinner
         if (snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(
             width: size,
@@ -51,26 +52,25 @@ class TreeProgressButton extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(size / 2),
             onTap: () {
-              // later: update points here
-              // e.g. ProfilePointsStore.addPoints(userId, 5);
+              // TODO: Add navigation or interaction logic here
             },
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // background ring
+                // 1. Background ring (Track)
                 SizedBox(
                   width: size,
                   height: size,
                   child: CircularProgressIndicator(
-                    value: 1,
+                    value: 1, // Always full circle
                     strokeWidth: ringWidth,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.lightGrey, // change if your name differs
+                      AppColors.lightGrey, 
                     ),
                   ),
                 ),
 
-                // progress ring
+                // 2. Progress ring (Fill)
                 SizedBox(
                   width: size,
                   height: size,
@@ -79,21 +79,23 @@ class TreeProgressButton extends StatelessWidget {
                     strokeWidth: ringWidth,
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.main),
                     backgroundColor: Colors.transparent,
+                    strokeCap: StrokeCap.round, // ✅ Makes the ends rounded for a polished look
                   ),
                 ),
 
-                // inner circle + image
+                // 3. Inner circle + Image
+                // We use (size - ringWidth * 2) to ensure the image sits strictly inside the ring
                 Container(
                   width: size - ringWidth * 2,
                   height: size - ringWidth * 2,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.transparent,
                   ),
                   child: ClipOval(
                     child: Image.asset(
                       asset,
-                      fit: BoxFit.cover, // fills the circle
+                      fit: BoxFit.cover, // fills the circle without distortion
                     ),
                   ),
                 ),

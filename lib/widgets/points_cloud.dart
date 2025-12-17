@@ -12,8 +12,8 @@ class PointsCloud extends StatelessWidget {
     super.key,
     required this.userId,
     required this.goal,
-    this.height = 40,
-    this.minWidth = 400,
+    this.height = 50,
+    this.minWidth = 250,
   });
 
   @override
@@ -23,32 +23,37 @@ class PointsCloud extends StatelessWidget {
       builder: (context, snapshot) {
         final points = snapshot.data ?? 0;
 
-        return Align( // να μην “απλώνει” σε όλο το πλάτος
+        return Align(
           alignment: Alignment.center,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minWidth: minWidth,
-              maxWidth: minWidth, // ✅ κλειδώνει το πλάτος
+              maxWidth: minWidth, // Locks the width to whatever is passed
             ),
             child: SizedBox(
               height: height,
               child: CustomPaint(
                 painter: _CloudShapePainter(
                   fillColor: AppColors.ourYellow,
-                  strokeColor: AppColors.outline, // άλλαξε αν το λες αλλιώς
+                  strokeColor: AppColors.outline, 
                   strokeWidth: 2,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 22),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center, // ✅ Centers content if text is short
                     children: [
-                      Text(
-                        'Total Points:',
-                        style: AppTexts.generalBody.copyWith(
-                          fontWeight: FontWeight.w600,
+                      Flexible( // ✅ Flexible allows text to shrink if needed
+                        child: Text(
+                          'Points:',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTexts.generalBody.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '$points / $goal',
                         style: AppTexts.generalBody.copyWith(
@@ -67,7 +72,7 @@ class PointsCloud extends StatelessWidget {
   }
 }
 
-// --- PAINTER LOGIC (Draws the cloud shape) ---
+// --- PAINTER LOGIC (Unchanged) ---
 class _CloudShapePainter extends CustomPainter {
   final Color fillColor;
   final Color strokeColor;
