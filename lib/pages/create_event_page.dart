@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'theme/app_variables.dart';
-import 'widgets/main_nav_bar.dart';
+import '../theme/app_variables.dart';
+import '../widgets/main_nav_bar.dart';
 
 
 class CreateEventPage extends StatefulWidget {
@@ -420,11 +420,6 @@ Future<String?> _pickUrlDialog() async {
       ),
       bottomNavigationBar: MainNavBar(
         currentIndex: null,
-        onTabSelected: (index) {
-          if (index == 1) {
-            Navigator.pop(context);
-          }
-        },
       ),
     );
   }

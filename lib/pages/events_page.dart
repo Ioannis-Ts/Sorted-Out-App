@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'theme/app_variables.dart';
-import 'widgets/event_thumbnail.dart';
-import 'widgets/main_nav_bar.dart';
+import '../theme/app_variables.dart';
+import '../widgets/event_thumbnail.dart';
+import '../widgets/main_nav_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'models/event_model.dart';
+import '../models/event_model.dart';
 import 'event_details_page.dart';
 import 'create_event_page.dart';
 
@@ -145,9 +145,6 @@ class _EventsPageState extends State<EventsPage> {
             right: 0,
             child: MainNavBar(
               currentIndex: null,
-              onTabSelected: (_) {
-                // TODO: navigation αργότερα
-              },
             ),
           ),
         ],

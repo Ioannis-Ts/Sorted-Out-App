@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'theme/app_variables.dart';
-import 'models/event_model.dart';
-import 'widgets/main_nav_bar.dart';
+import '../theme/app_variables.dart';
+import '../models/event_model.dart';
+import '../widgets/main_nav_bar.dart';
 
 class EventDetailsPage extends StatelessWidget {
   final EventModel event;
@@ -159,9 +159,6 @@ class EventDetailsPage extends StatelessWidget {
             right: 0,
             child: MainNavBar(
               currentIndex: null,
-              onTabSelected: (_) {
-                // TODO: navigation αν θες
-              },
             ),
           ),
         ],

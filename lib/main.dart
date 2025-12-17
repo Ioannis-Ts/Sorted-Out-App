@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'test_start_page.dart'; // ή EventsPage, ανάλογα τι θέλεις ως αρχική
+// import 'pages/test_page.dart'; // ή EventsPage, ανάλογα τι θέλεις ως αρχική
+import 'pages/home_page.dart'; 
+// import 'pages/map_page.dart';
+// import 'pages/ai_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,14 +28,22 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static const String testUserId = 'test_user';
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'IstokWeb',
-      ),
-      home: const TestStartPage(), // εδώ βάζεις όποια σελίδα θες ως αρχική
+
+      // start page
+      initialRoute: '/home',
+
+      // named routes
+      routes: {
+       // '/ai': (_) => const AiPage(userId: testUserId),
+        '/home': (_) => const HomePage(userId: testUserId),
+       // '/map': (_) => const MapPage(userId: testUserId),
+      },
     );
   }
 }
