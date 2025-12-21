@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
-
+import 'recycle_points_page.dart';
 import '../widgets/main_nav_bar.dart';
 import '../widgets/tree_progress_button.dart';
 import '../widgets/points_cloud.dart';
@@ -33,18 +33,18 @@ class HomePage extends StatelessWidget {
     // --- DYNAMIC SIZES ---
     // Tree: 27% of screen height
     final double treeSize = screenHeight * 0.27;
-    
+
     // Cloud Width: 80% of screen width
     final double cloudWidth = screenWidth * 0.80;
-    
+
     // ✅ NEW: Cloud Height is now dynamic (5.5% of screen height)
     // This ensures it shrinks on small screens to avoid touching the tree.
-    final double cloudHeight = screenHeight * 0.055; 
+    final double cloudHeight = screenHeight * 0.055;
 
     // QR Button: 9% of screen height
-    final double qrSize = screenHeight * 0.09;   
-    
-    final double navBarHeight = 90.0;            
+    final double qrSize = screenHeight * 0.09;
+
+    final double navBarHeight = 90.0;
 
     return Scaffold(
       body: Stack(
@@ -61,27 +61,30 @@ class HomePage extends StatelessWidget {
 
           // Content Layer
           SafeArea(
-            bottom: false, 
+            bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(16, 10, 16, navBarHeight + 5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- PROFILE ---
-                  ProfileNameButton(
-                    userId: userId,
-                    onTap: () {},
-                  ),
+                  ProfileNameButton(userId: userId, onTap: () {}),
 
-                  const Spacer(flex: 1), 
+                  const Spacer(flex: 1),
 
                   // --- STATS TITLE ---
                   Align(
                     alignment: Alignment.center,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 25,
+                        vertical: 0,
+                      ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.outline, width: 1.5),
+                        border: Border.all(
+                          color: AppColors.outline,
+                          width: 1.5,
+                        ),
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -89,7 +92,7 @@ class HomePage extends StatelessWidget {
                         'Tons Collected',
                         style: AppTexts.generalBody.copyWith(
                           fontWeight: FontWeight.w700,
-                          height: 1.0, 
+                          height: 1.0,
                         ),
                       ),
                     ),
@@ -109,9 +112,17 @@ class HomePage extends StatelessWidget {
                           final maxTons = (tonsA > tonsB) ? tonsA : tonsB;
                           return Column(
                             children: [
-                              TonsCollectedBar(year: yearA, tons: tonsA, maxTons: maxTons),
-                              const SizedBox(height: 8), 
-                              TonsCollectedBar(year: yearB, tons: tonsB, maxTons: maxTons),
+                              TonsCollectedBar(
+                                year: yearA,
+                                tons: tonsA,
+                                maxTons: maxTons,
+                              ),
+                              const SizedBox(height: 8),
+                              TonsCollectedBar(
+                                year: yearB,
+                                tons: tonsB,
+                                maxTons: maxTons,
+                              ),
                             ],
                           );
                         },
@@ -119,7 +130,7 @@ class HomePage extends StatelessWidget {
                     },
                   ),
 
-                  const Spacer(flex: 2), 
+                  const Spacer(flex: 2),
 
                   // --- TREE ---
                   Align(
@@ -129,6 +140,13 @@ class HomePage extends StatelessWidget {
                       goal: pointsGoal,
                       size: treeSize,
                       ringWidth: treeSize * 0.05,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => RecyclePointsPage(userId: userId),
+                          ),
+                        );
+                      },
                     ),
                   ),
 
@@ -140,12 +158,12 @@ class HomePage extends StatelessWidget {
                     child: PointsCloud(
                       userId: userId,
                       goal: pointsGoal,
-                      minWidth: cloudWidth, 
-                      height: cloudHeight, 
+                      minWidth: cloudWidth,
+                      height: cloudHeight,
                     ),
                   ),
 
-                  const SizedBox(height: 24), 
+                  const SizedBox(height: 24),
 
                   // --- BUTTONS ---
                   Row(
@@ -153,21 +171,20 @@ class HomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       EventsPillButton(
-                        height: 52, 
+                        height: 52,
                         onTap: () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const EventsPage()),
+                            MaterialPageRoute(
+                              builder: (_) => const EventsPage(),
+                            ),
                           );
                         },
                       ),
-                      QrButton(
-                        size: qrSize,
-                        onTap: () {},
-                      ),
+                      QrButton(size: qrSize, onTap: () {}),
                     ],
                   ),
 
-                  const Spacer(flex: 3), 
+                  const Spacer(flex: 3),
                 ],
               ),
             ),

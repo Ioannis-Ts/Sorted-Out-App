@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
 
 class MainNavBar extends StatelessWidget {
-  final int? currentIndex; // 0 = AI, 1 = home, 2 = map. null = κανένα ενεργό
+  final int? currentIndex; // 0 = AI, 1 = home, 2 = map. null = none active
 
-  const MainNavBar({
-    super.key,
-    required this.currentIndex,
-  });
+  const MainNavBar({super.key, required this.currentIndex});
 
   void _go(BuildContext context, int index) {
-    // Αν είμαστε ήδη εκεί, μην κάνεις τίποτα
     if (currentIndex != null && currentIndex == index) return;
 
     final route = switch (index) {
@@ -20,7 +16,6 @@ class MainNavBar extends StatelessWidget {
       _ => '/home',
     };
 
-    // Replacement ώστε να μη γίνεται stack με κάθε tab
     Navigator.of(context).pushReplacementNamed(route);
   }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 // import 'pages/test_page.dart'; // ή EventsPage, ανάλογα τι θέλεις ως αρχική
-import 'pages/home_page.dart'; 
+import 'pages/home_page.dart';
 // import 'pages/map_page.dart';
-// import 'pages/ai_page.dart';
+import 'pages/ai_assistant_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,9 +40,9 @@ class MyApp extends StatelessWidget {
 
       // named routes
       routes: {
-       // '/ai': (_) => const AiPage(userId: testUserId),
+        '/ai': (_) => const AiAssistantPage(),
         '/home': (_) => const HomePage(userId: testUserId),
-       // '/map': (_) => const MapPage(userId: testUserId),
+        // '/map': (_) => const MapPage(userId: testUserId),
       },
     );
   }

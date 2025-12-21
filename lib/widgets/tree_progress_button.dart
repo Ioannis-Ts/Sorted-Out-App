@@ -4,9 +4,10 @@ import '../services/profile_points_store.dart';
 
 class TreeProgressButton extends StatelessWidget {
   final String userId; // must match Profiles/{userId}
-  final int goal;      // points needed for 100%
+  final int goal; // points needed for 100%
   final double size;
   final double ringWidth;
+  final VoidCallback? onTap;
 
   const TreeProgressButton({
     super.key,
@@ -14,6 +15,7 @@ class TreeProgressButton extends StatelessWidget {
     this.goal = 100,
     this.size = 88,
     this.ringWidth = 7,
+    this.onTap,
   });
 
   double _progress(int points) {
@@ -52,7 +54,7 @@ class TreeProgressButton extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(size / 2),
             onTap: () {
-              // TODO: Add navigation or interaction logic here
+              onTap?.call();
             },
             child: Stack(
               alignment: Alignment.center,
@@ -65,7 +67,7 @@ class TreeProgressButton extends StatelessWidget {
                     value: 1, // Always full circle
                     strokeWidth: ringWidth,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.lightGrey, 
+                      AppColors.lightGrey,
                     ),
                   ),
                 ),
@@ -79,7 +81,8 @@ class TreeProgressButton extends StatelessWidget {
                     strokeWidth: ringWidth,
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.main),
                     backgroundColor: Colors.transparent,
-                    strokeCap: StrokeCap.round, // ✅ Makes the ends rounded for a polished look
+                    strokeCap: StrokeCap
+                        .round, // ✅ Makes the ends rounded for a polished look
                   ),
                 ),
 

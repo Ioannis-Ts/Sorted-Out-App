@@ -34,6 +34,8 @@ dependencies:
   firebase_storage: ^13.0.4
   firebase_core: ^4.2.1
   cloud_firestore: ^6.1.0
+  dash_chat_2: ^0.0.21
+  google_generative_ai: ^0.4.6
 
 dev_dependencies:
   flutter_test:
