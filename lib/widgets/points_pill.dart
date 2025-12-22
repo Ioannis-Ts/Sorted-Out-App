@@ -1,37 +1,34 @@
 import 'package:flutter/material.dart';
-import '../theme/app_variables.dart';
+import '../theme/app_variables.dart'; // Adjust import if your path differs
 
 class PointsPill extends StatelessWidget {
   final int points;
-  final double minWidth;
-  final double height;
 
-  const PointsPill({
-    super.key,
-    required this.points,
-    this.minWidth = 60,
-    this.height = 34,
-  });
+  const PointsPill({super.key, required this.points});
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: minWidth),
-      child: Container(
-        height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: AppColors.lightGrey,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.grey.withOpacity(0.35)),
-        ),
-        child: Center(
-          child: Text(
-            points.toString(),
-            style: AppTexts.generalTitle.copyWith(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'Points: $points', // CHANGED: Added "Points: " prefix
+          style: const TextStyle(
+            color: AppColors.textMain, // Uses your app theme color
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
       ),

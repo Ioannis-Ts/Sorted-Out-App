@@ -4,6 +4,7 @@ import '../widgets/main_nav_bar.dart';
 import '../widgets/recycle_material_button.dart';
 import '../widgets/points_pill.dart';
 import '../widgets/submit_pill_button.dart';
+import '../widgets/reset_icon_button.dart';
 import '../services/profile_points_store.dart';
 
 class RecyclePointsPage extends StatefulWidget {
@@ -19,8 +20,51 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
   int _sessionPoints = 0;
   bool _submitting = false;
 
-  void _addPoints(int delta) {
-    setState(() => _sessionPoints += delta);
+  final Map<String, int> _itemCounts = {};
+
+  // Updated Glass emoji to a bottle 🍾
+  final Map<String, String> _categoryEmojis = {
+    'Plastic': '🥤',
+    'Paper': '📄',
+    'Glass': '🍾',
+    'Metal': '🥫',
+    'Batteries': '🔋',
+    'Electronics': '📱',
+    'Food': '🍎',
+  };
+
+  void _addPoints(String label, int delta) {
+    setState(() {
+      _sessionPoints += delta;
+      _itemCounts[label] = (_itemCounts[label] ?? 0) + 1;
+    });
+  }
+
+  void _resetPoints() {
+    setState(() {
+      _sessionPoints = 0;
+      _itemCounts.clear();
+    });
+  }
+
+  // New logic: Text is always there, emojis are appended
+  String _getSummaryText() {
+    const String prefix = "You recycled:";
+
+    if (_itemCounts.isEmpty) {
+      return prefix;
+    }
+
+    List<String> parts = [];
+    _itemCounts.forEach((key, count) {
+      if (count > 0) {
+        String emoji = _categoryEmojis[key] ?? '';
+        parts.add('${count}x$emoji');
+      }
+    });
+
+    // Returns "You recycled: 1x🥤 2x🍾"
+    return "$prefix ${parts.join(' ')}";
   }
 
   Future<void> _submit() async {
@@ -29,11 +73,10 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
     setState(() => _submitting = true);
 
     try {
-      // IMPORTANT: your existing store writes to Profiles/{userId}.totalpoints
       await ProfilePointsStore.addPoints(widget.userId, _sessionPoints);
 
       if (!mounted) return;
-      Navigator.of(context).pop(); // back to HomePage
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -46,17 +89,13 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
-    // Layout like your screenshot: 2 columns + a centered "Food" button
     const double horizontalPadding = 22;
     const double gap = 18;
-
     final double buttonWidth = (size.width - (horizontalPadding * 2) - gap) / 2;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background (same approach as HomePage)
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -73,7 +112,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                 horizontalPadding,
                 22,
                 horizontalPadding,
-                120, // space for navbar
+                120,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,19 +128,19 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Buttons grid (manual rows to match screenshot)
+                  // Buttons grid
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       RecycleMaterialButton(
                         label: 'Plastic',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.plastic),
+                        onTap: () => _addPoints('Plastic', AppPoints.plastic),
                       ),
                       RecycleMaterialButton(
                         label: 'Paper',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.paper),
+                        onTap: () => _addPoints('Paper', AppPoints.paper),
                       ),
                     ],
                   ),
@@ -112,12 +151,12 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                       RecycleMaterialButton(
                         label: 'Glass',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.glass),
+                        onTap: () => _addPoints('Glass', AppPoints.glass),
                       ),
                       RecycleMaterialButton(
                         label: 'Metal',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.metal),
+                        onTap: () => _addPoints('Metal', AppPoints.metal),
                       ),
                     ],
                   ),
@@ -128,12 +167,14 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                       RecycleMaterialButton(
                         label: 'Batteries',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.batteries),
+                        onTap: () =>
+                            _addPoints('Batteries', AppPoints.batteries),
                       ),
                       RecycleMaterialButton(
                         label: 'Electronics',
                         width: buttonWidth,
-                        onTap: () => _addPoints(AppPoints.electronics),
+                        onTap: () =>
+                            _addPoints('Electronics', AppPoints.electronics),
                       ),
                     ],
                   ),
@@ -144,25 +185,39 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                     child: RecycleMaterialButton(
                       label: 'Food',
                       width: buttonWidth,
-                      onTap: () => _addPoints(AppPoints.food),
+                      onTap: () => _addPoints('Food', AppPoints.food),
                     ),
                   ),
 
                   const SizedBox(height: 26),
 
+                  // Summary Row
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Text(
-                          "That's great! Here are your points:",
+                          _getSummaryText(),
                           style: AppTexts.generalBody.copyWith(
-                            fontSize: 14,
+                            fontSize: 13, // Slightly smaller to fit everything
                             color: AppColors.textMain,
+                            fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
+
                       PointsPill(points: _sessionPoints),
+
+                      const SizedBox(width: 8),
+
+                      ResetIconButton(
+                        onTap: _resetPoints,
+                        height: 40,
+                        width: 40,
+                      ),
                     ],
                   ),
 
@@ -179,12 +234,11 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
             ),
           ),
 
-          // Bottom Nav Bar (keep it like screenshot)
           const Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: MainNavBar(currentIndex: null), // home highlighted
+            child: MainNavBar(currentIndex: null),
           ),
         ],
       ),
