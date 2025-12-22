@@ -24,7 +24,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
   // Updated Glass emoji to a bottle 🍾
   final Map<String, String> _categoryEmojis = {
-    'Plastic': '🥤',
+    'Plastic': '🧴',
     'Paper': '📄',
     'Glass': '🍾',
     'Metal': '🥫',
