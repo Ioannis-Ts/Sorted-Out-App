@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
 import '../models/event_model.dart';
-import '../widgets/main_nav_bar.dart';
 
 class EventDetailsPage extends StatelessWidget {
   final EventModel event;
@@ -17,23 +16,22 @@ class EventDetailsPage extends StatelessWidget {
     return '$day/$month/$year - $hour:$minute';
   }
 
-  // WIDGET: Το στατικό Header (παραμένει το ίδιο)
+  // WIDGET: The static Header
   Widget _buildHeader(BuildContext context) {
     final dateStr = _formatDateTime(event.date);
 
-    // Το SafeArea διασφαλίζει ότι το header δεν κρύβεται πίσω από την εγκοπή (notch)
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Row(
           children: [
-            // Κουμπί Πίσω (Είναι ήδη μέσα στο header)
+            // Back Button
             IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
             const SizedBox(width: 8),
-            // Τίτλος και Ημερομηνία/Τοποθεσία στο κέντρο
+            // Title and Location/Date centered
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -57,7 +55,7 @@ class EventDetailsPage extends StatelessWidget {
                 ],
               ),
             ),
-            // Κενό για να ισοσταθμίσει το IconButton αριστερά
+            // Spacer to balance the back button
             const SizedBox(width: 48), 
           ],
         ),
@@ -67,7 +65,7 @@ class EventDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 💡 Αλλάξτε αυτό το ύψος αν το header σας είναι ψηλότερο ή κοντύτερο.
+    // Adjust this height if your header content is taller/shorter
     const double staticHeaderHeight = 100.0; 
 
     return Scaffold(
@@ -83,13 +81,14 @@ class EventDetailsPage extends StatelessWidget {
             ),
           ),
 
-          // 2. Scrollable Περιεχόμενο (ξεκινάει κάτω από το Header)
+          // 2. Scrollable Content
           Positioned.fill(
             top: staticHeaderHeight, 
-            bottom: 67, // Το ύψος της bottom nav bar
+            bottom: 0, // ✅ Changed from 67 to 0 to use the full screen height
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                // Added some bottom padding so content doesn't touch the very edge of the screen
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -144,7 +143,7 @@ class EventDetailsPage extends StatelessWidget {
             ),
           ),
           
-          // 3. Στατικό Header (Η ΔΙΟΡΘΩΣΗ ΕΙΝΑΙ ΕΔΩ)
+          // 3. Static Header
           Positioned(
             top: 0,
             left: 0,
@@ -152,21 +151,13 @@ class EventDetailsPage extends StatelessWidget {
             child: _buildHeader(context),
           ),
           
-          // 4. Bottom nav bar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: MainNavBar(
-              currentIndex: null,
-            ),
-          ),
+          // REMOVED: Positioned(bottom: 0...) for MainNavBar
         ],
       ),
     );
   }
   
-  // Κώδικας _buildPicturesGrid...
+  // Pictures Grid Logic
   Widget _buildPicturesGrid(BuildContext context) {
     final images = event.imageUrls.take(4).toList(); 
 

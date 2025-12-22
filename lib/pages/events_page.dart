@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
 import '../widgets/event_thumbnail.dart';
-import '../widgets/main_nav_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event_model.dart';
 import 'event_details_page.dart';
 import 'create_event_page.dart';
-
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -22,7 +20,7 @@ class _EventsPageState extends State<EventsPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // BACKGROUND
+          // 1. BACKGROUND
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -32,14 +30,14 @@ class _EventsPageState extends State<EventsPage> {
             ),
           ),
 
-          // CONTENT
+          // 2. CONTENT
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 0,
                 24,
                 0,
-                150, // χώρος για + και nav bar
+                110, // ✅ Reduced padding: More space for the list, just enough to clear the button
               ),
               child: Column(
                 children: [
@@ -50,6 +48,8 @@ class _EventsPageState extends State<EventsPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  
+                  // ✅ Expanded now takes up all the extra space left by removing the nav bar
                   Expanded(
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
@@ -74,6 +74,8 @@ class _EventsPageState extends State<EventsPage> {
                         final events = docs.map((d) => EventModel.fromDoc(d)).toList();
 
                         return ListView.builder(
+                          // Adding top padding to list prevents first item from sticking to title
+                          padding: const EdgeInsets.only(top: 8), 
                           itemCount: events.length,
                           itemBuilder: (context, index) {
                             final e = events[index];
@@ -100,9 +102,27 @@ class _EventsPageState extends State<EventsPage> {
             ),
           ),
 
-          // ΚΟΥΜΠΙ "+"
+          // 3. BACK ARROW (Top Left)
           Positioned(
-            bottom: 82, // ακριβώς πάνω από το nav bar
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 28),
+                  color: AppColors.textMain,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          // 4. "+" BUTTON (Moved Down)
+          Positioned(
+            bottom: 32, // ✅ Moved closer to bottom since Nav Bar is gone
             left: 0,
             right: 0,
             child: Center(
@@ -137,16 +157,8 @@ class _EventsPageState extends State<EventsPage> {
               ),
             ),
           ),
-
-          // MAIN NAV BAR
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: MainNavBar(
-              currentIndex: null,
-            ),
-          ),
+          
+          // REMOVED: MainNavBar Positioned widget
         ],
       ),
     );

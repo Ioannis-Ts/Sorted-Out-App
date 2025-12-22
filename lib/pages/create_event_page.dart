@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_variables.dart';
-import '../widgets/main_nav_bar.dart';
-
 
 class CreateEventPage extends StatefulWidget {
+  const CreateEventPage({super.key});
+
   @override
   _CreateEventPageState createState() => _CreateEventPageState();
 }
@@ -21,16 +21,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   bool _isEditingTitle = false;
   bool _isEditingLocation = false;
-  bool _isEditingDate = false;
-  bool _isEditingTime = false;
 
-  // Δημιουργία Event στο Firestore
+  // --- LOGIC: Create Event ---
   Future<void> _createEvent() async {
     final title = _titleController.text.trim();
     final location = _locationController.text.trim();
     final description = _descriptionController.text.trim();
 
-    // ✅ require date+time too
     if (title.isEmpty ||
         location.isEmpty ||
         description.isEmpty ||
@@ -42,7 +39,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
       return;
     }
 
-    // ✅ combine date + time into one DateTime
     final eventDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
@@ -55,16 +51,18 @@ class _CreateEventPageState extends State<CreateEventPage> {
       await FirebaseFirestore.instance.collection('Events').add({
         'title': title,
         'location': location,
-        'date': Timestamp.fromDate(eventDateTime), // ✅ stores both date+time
+        'date': Timestamp.fromDate(eventDateTime),
         'description': description,
         'imageUrls': _imageUrls.where((e) => e.trim().isNotEmpty).toList(),
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Event created successfully!')),
       );
-      Navigator.pop(context);
+      Navigator.pop(context); // Go back to Home/Events page
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to create event: $e')),
       );
@@ -77,11 +75,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
     });
   }
 
-  // Επιλογή ημερομηνίας
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(), // ✅
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2101),
     );
@@ -89,55 +86,51 @@ class _CreateEventPageState extends State<CreateEventPage> {
     if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
-        _isEditingDate = false;
       });
     }
   }
 
-  // Επιλογή ώρας
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(), // ✅
+      initialTime: _selectedTime ?? TimeOfDay.now(),
     );
 
     if (pickedTime != null) {
       setState(() {
         _selectedTime = pickedTime;
-        _isEditingTime = false;
       });
     }
   }
 
-Future<void> _onAddImagePressed(int slotIndex) async {
-  final url = await _pickUrlDialog();
-  if (url != null && url.isNotEmpty) _setImageAtSlot(slotIndex, url);
-}
+  Future<void> _onAddImagePressed(int slotIndex) async {
+    final url = await _pickUrlDialog();
+    if (url != null && url.isNotEmpty) _setImageAtSlot(slotIndex, url);
+  }
 
-Future<String?> _pickUrlDialog() async {
-  final controller = TextEditingController();
+  Future<String?> _pickUrlDialog() async {
+    final controller = TextEditingController();
 
-  final url = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Paste image URL'),
-      content: TextField(
-        controller: controller,
-        decoration: const InputDecoration(hintText: 'https://...'),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Navigator.pop(context, controller.text.trim()),
-          child: const Text('Add'),
+    final url = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Paste image URL'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'https://...'),
         ),
-      ],
-    ),
-  );
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
 
-  return url?.trim();
-}
-
+    return url?.trim();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +145,7 @@ Future<String?> _pickUrlDialog() async {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
+          // 1. Background Image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -162,21 +155,23 @@ Future<String?> _pickUrlDialog() async {
             ),
           ),
 
-          // Το περιεχόμενο
+          // 2. Content
           SafeArea(
             child: Column(
               children: [
-                // Custom AppBar
+                // --- HEADER (Back Arrow + Title + Save Button) ---
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Back button
+                      // ✅ Back button (Top Left)
                       IconButton(
                         icon: const Icon(Icons.arrow_back, size: 28),
+                        color: AppColors.textMain,
                         onPressed: () => Navigator.pop(context),
                       ),
+                      
                       // Title
                       Text(
                         'Add Event',
@@ -184,7 +179,8 @@ Future<String?> _pickUrlDialog() async {
                           fontSize: 28,
                         ),
                       ),
-                      // Save button
+                      
+                      // Save button (Top Right)
                       TextButton(
                         onPressed: _createEvent,
                         child: Text(
@@ -200,13 +196,16 @@ Future<String?> _pickUrlDialog() async {
                   ),
                 ),
 
+                // --- SCROLLABLE FORM ---
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Τίτλος του event (κεντραρισμένος)
+                        const SizedBox(height: 10),
+                        
+                        // Event Title Input
                         Center(
                           child: GestureDetector(
                             onTap: () {
@@ -249,7 +248,7 @@ Future<String?> _pickUrlDialog() async {
                         // Location - Date - Time
                         Row(
                           children: [
-                            // Τοποθεσία
+                            // Location
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
@@ -287,12 +286,12 @@ Future<String?> _pickUrlDialog() async {
 
                             Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
 
-                            // Ημερομηνία (✅ shows "Date" until selected)
+                            // Date
                             GestureDetector(
                               onTap: () async {
                                 await _selectDate(context);
                                 if (_selectedDate != null) {
-                                  await _selectTime(context);
+                                  if (mounted) await _selectTime(context);
                                 }
                               },
                               child: Text(
@@ -306,14 +305,14 @@ Future<String?> _pickUrlDialog() async {
 
                             Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
 
-                            // Ώρα (✅ shows "Time" until selected)
+                            // Time
                             GestureDetector(
                               onTap: () async {
                                 if (_selectedDate == null) {
                                   await _selectDate(context);
                                   if (_selectedDate == null) return;
                                 }
-                                await _selectTime(context);
+                                if (mounted) await _selectTime(context);
                               },
                               child: Text(
                                 timeText,
@@ -328,7 +327,7 @@ Future<String?> _pickUrlDialog() async {
 
                         const SizedBox(height: 8),
 
-                        // "Description" label
+                        // Description Label
                         Text(
                           'Description',
                           style: AppTexts.generalTitle.copyWith(
@@ -339,7 +338,7 @@ Future<String?> _pickUrlDialog() async {
 
                         const SizedBox(height: 12),
 
-                        // Περιγραφή του event (κίτρινο κουτί)
+                        // Description Box
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
@@ -367,7 +366,7 @@ Future<String?> _pickUrlDialog() async {
 
                         const SizedBox(height: 20),
 
-                        // "Pictures" label
+                        // Pictures Label
                         Text(
                           'Pictures',
                           style: AppTexts.generalTitle.copyWith(
@@ -378,7 +377,7 @@ Future<String?> _pickUrlDialog() async {
 
                         const SizedBox(height: 12),
 
-                        // Φωτογραφίες (κίτρινο κουτί με 4 + buttons)
+                        // Pictures Box
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
@@ -408,7 +407,8 @@ Future<String?> _pickUrlDialog() async {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 80),
+                        // Extra space at bottom for easy scrolling
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -418,52 +418,50 @@ Future<String?> _pickUrlDialog() async {
           ),
         ],
       ),
-      bottomNavigationBar: MainNavBar(
-        currentIndex: null,
-      ),
+      // ✅ No BottomNavigationBar here
     );
   }
 
-  // Widget για τα κουτιά προσθήκης φωτογραφιών
+  // Widget helper for photo boxes
   Widget _buildAddPhotoBox(int slotIndex) {
-  final url = _imageUrls[slotIndex].trim();
-  final hasUrl = url.isNotEmpty;
+    final url = _imageUrls[slotIndex].trim();
+    final hasUrl = url.isNotEmpty;
 
-  return Expanded(
-    child: AspectRatio(
-      aspectRatio: 1,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey, width: 2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _onAddImagePressed(slotIndex),
+    return Expanded(
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.grey, width: 2),
             borderRadius: BorderRadius.circular(8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: hasUrl
-                  ? Image.network(
-                      url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: Icon(Icons.broken_image, size: 32, color: AppColors.grey),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _onAddImagePressed(slotIndex),
+              borderRadius: BorderRadius.circular(8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: hasUrl
+                    ? Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Center(
+                          child: Icon(Icons.broken_image, size: 32, color: AppColors.grey),
+                        ),
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(child: CircularProgressIndicator());
+                        },
+                      )
+                    : const Center(
+                        child: Icon(Icons.add, size: 40, color: AppColors.grey),
                       ),
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                    )
-                  : const Center(
-                      child: Icon(Icons.add, size: 40, color: AppColors.grey),
-                    ),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

@@ -11,30 +11,17 @@ class AppColors {
 
   // ======== MAIN BRAND COLORS (από Figma) ========
 
-  // Our Main Color
   static const Color main = Color(0xFF8B99FF);
-
-  // Our Grey Color
   static const Color grey = Color(0xFF777070);
-
-  // Our Grey Color 2 (ίδιο hex, ειλικρινά δεν ξέρω γιατί θα το δούμε στην πορεία)
-  static const Color grey2 = Color(0xFF777070);
-
-  // Our Light Grey Color
+  static const Color grey2 = Color.fromARGB(255, 82, 76, 76);
   static const Color lightGrey = Color(0xFFEAEAEA);
-
-  // Outline Color
   static const Color outline = Color(0xFFA69E9E);
-
-  // Another Grey Color
   static const Color anotherGrey = Color(0xFF535252);
-
-  // Our Yellow Color
   static const Color ourYellow = Color(0xFFFFFAE2);
 
   // ======== ΒΟΗΘΗΤΙΚΑ (μπορούμε να τα προσαρμόσουμε αργότερα) ========
 
-  static const Color textMain = anotherGrey;      //στα events και γενικά αντί για μαύρο κείμενο
+  static const Color textMain = anotherGrey;      // αντί για μαύρο κείμενο
   static const Color textMuted = grey;  // πιο ήσυχο κείμενο
 }
 
