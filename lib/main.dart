@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'pages/home_page.dart';
 // import 'pages/map_page.dart';
 import 'pages/ai_assistant_page.dart';
+import 'pages/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,12 +37,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // start page
-      initialRoute: '/home',
+      initialRoute: '/login',
 
       // named routes
       routes: {
         '/ai': (_) => const AiAssistantPage(),
-        '/home': (_) => const HomePage(userId: testUserId),
+        '/home': (_) => const LoginPage(),
+        '/login': (context) => const LoginPage(),
+        '/home': (context) => const HomePage(userId: 'test_user'),
+        // '/home': (_) => const HomePage(userId: testUserId),
         // '/map': (_) => const MapPage(userId: testUserId),
       },
     );
