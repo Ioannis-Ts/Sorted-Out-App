@@ -29,24 +29,20 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static const String testUserId = 'test_user';
+  static const String testUserId = 'test_user'; // προσωρινό
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
-      // start page
       initialRoute: '/login',
-
-      // named routes
       routes: {
-        '/ai': (_) => const AiAssistantPage(),
-        '/home': (_) => const LoginPage(),
         '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(userId: 'test_user'),
-        // '/home': (_) => const HomePage(userId: testUserId),
-        // '/map': (_) => const MapPage(userId: testUserId),
+        '/home': (context) => const HomePage(
+              userId: testUserId,
+            ),
+        '/ai': (context) => const AiAssistantPage(),
+        // '/map': (context) => MapPage(userId: testUserId),
       },
     );
   }

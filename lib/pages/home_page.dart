@@ -68,7 +68,7 @@ class HomePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- PROFILE ---
-                  ProfileNameButton(userId: userId, onTap: () {}),
+                  ProfileNameButton(userId: userId),
 
                   const Spacer(flex: 1),
 

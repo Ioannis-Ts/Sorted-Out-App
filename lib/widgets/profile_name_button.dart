@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_variables.dart';
 
-class ProfileNameButton extends StatelessWidget {
-  final String userId;          // Profiles/{userId}
-  final VoidCallback? onTap;    // later navigation etc.
+class ProfileNameButton extends StatefulWidget {
+  final String userId; // Profiles/{userId}
   final double avatarSize;
 
   const ProfileNameButton({
     super.key,
     required this.userId,
-    this.onTap,
     this.avatarSize = 54,
   });
+
+  @override
+  State<ProfileNameButton> createState() => _ProfileNameButtonState();
+}
+
+class _ProfileNameButtonState extends State<ProfileNameButton> {
+  final GlobalKey _avatarKey = GlobalKey();
 
   String _initialFromName(String name) {
     final trimmed = name.trim();
@@ -20,9 +25,56 @@ class ProfileNameButton extends StatelessWidget {
     return trimmed.characters.first.toUpperCase();
   }
 
+  void _showLogoutPopup(BuildContext context) async {
+    final RenderBox box =
+        _avatarKey.currentContext!.findRenderObject() as RenderBox;
+    final Offset position = box.localToGlobal(Offset.zero);
+    final Size size = box.size;
+
+    final result = await showMenu(
+      context: context,
+      color: AppColors.ourYellow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy + size.height + 6, // 👈 ακριβώς κάτω από το avatar
+        position.dx + size.width,
+        0,
+      ),
+      items: [
+        PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.logout, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Logout',
+                style: AppTexts.generalBody.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result == 'logout') {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/login',
+        (_) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final docRef = FirebaseFirestore.instance.collection('Profiles').doc(userId);
+    final docRef =
+        FirebaseFirestore.instance.collection('Profiles').doc(widget.userId);
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: docRef.snapshots(),
@@ -31,14 +83,13 @@ class ProfileNameButton extends StatelessWidget {
         final name = (data?['name'] ?? '').toString().trim();
         final initial = _initialFromName(name);
 
-        // if still loading show a small skeleton-ish widget
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: avatarSize,
-                height: avatarSize,
+                width: widget.avatarSize,
+                height: widget.avatarSize,
                 decoration: BoxDecoration(
                   color: AppColors.main.withOpacity(0.25),
                   shape: BoxShape.circle,
@@ -58,14 +109,16 @@ class ProfileNameButton extends StatelessWidget {
         }
 
         return InkWell(
-          onTap: onTap,
+          onTap: () => _showLogoutPopup(context),
           borderRadius: BorderRadius.circular(999),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 🔵 Avatar
               Container(
-                width: avatarSize,
-                height: avatarSize,
+                key: _avatarKey, // 👈 πολύ σημαντικό
+                width: widget.avatarSize,
+                height: widget.avatarSize,
                 decoration: BoxDecoration(
                   color: AppColors.main.withOpacity(0.75),
                   shape: BoxShape.circle,
@@ -79,7 +132,10 @@ class ProfileNameButton extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(width: 12),
+
+              // 👤 Name
               Text(
                 name.isEmpty ? 'Name' : name,
                 style: AppTexts.generalTitle.copyWith(
