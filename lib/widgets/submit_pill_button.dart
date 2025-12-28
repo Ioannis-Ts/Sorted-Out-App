@@ -17,29 +17,30 @@ class SubmitPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool enabled = onTap != null;
+    final enabled = onTap != null;
 
-    return SizedBox(
-      width: width,
-      height: height,
+    return Container(
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.lightGrey.withOpacity(enabled ? 1 : 0.6),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
           onTap: onTap,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: AppColors.lightGrey.withOpacity(enabled ? 1 : 0.6),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              border: Border.all(color: AppColors.grey.withOpacity(0.35)),
-            ),
+          child: SizedBox(
+            width: width,
+            height: height,
             child: Center(
               child: Text(
                 label,

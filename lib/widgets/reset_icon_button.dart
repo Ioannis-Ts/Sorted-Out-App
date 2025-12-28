@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_variables.dart';
 
 class ResetIconButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -8,33 +9,41 @@ class ResetIconButton extends StatelessWidget {
   const ResetIconButton({
     super.key,
     required this.onTap,
-    this.height = 40, // Standard height to match typical pills
+    this.height = 40,
     this.width = 40,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-          color: Colors.white, // Matches the PointsPill background
+    return Container(
+      margin: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppColors.lightGrey,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+          onTap: onTap,
+          child: SizedBox(
+            height: height,
+            width: width,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'assets/images/refresh_button.png',
+                fit: BoxFit.contain,
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0), // Padding for the icon inside
-          child: Image.asset(
-            'assets/images/refresh_button.png',
-            fit: BoxFit.contain,
           ),
         ),
       ),

@@ -4,8 +4,6 @@ import '../theme/app_variables.dart';
 class RecycleMaterialButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-
-  /// Suggested: pass responsive width from the page
   final double width;
   final double height;
 
@@ -19,26 +17,29 @@ class RecycleMaterialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      height: height,
+    return Container(
+      // a little breathing room like QR button
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.main,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
           onTap: onTap,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: AppColors.main,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          child: SizedBox(
+            width: width,
+            height: height,
             child: Center(
               child: Text(
                 label,

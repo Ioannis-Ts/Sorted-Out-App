@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
-import '../widgets/main_nav_bar.dart';
 import '../widgets/recycle_material_button.dart';
 import '../widgets/points_pill.dart';
 import '../widgets/submit_pill_button.dart';
@@ -22,7 +21,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
   final Map<String, int> _itemCounts = {};
 
-  // Updated Glass emoji to a bottle 🍾
   final Map<String, String> _categoryEmojis = {
     'Plastic': '🧴',
     'Paper': '📄',
@@ -47,23 +45,18 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
     });
   }
 
-  // New logic: Text is always there, emojis are appended
   String _getSummaryText() {
     const String prefix = "You recycled:";
+    if (_itemCounts.isEmpty) return prefix;
 
-    if (_itemCounts.isEmpty) {
-      return prefix;
-    }
-
-    List<String> parts = [];
+    final parts = <String>[];
     _itemCounts.forEach((key, count) {
       if (count > 0) {
-        String emoji = _categoryEmojis[key] ?? '';
+        final emoji = _categoryEmojis[key] ?? '';
         parts.add('${count}x$emoji');
       }
     });
 
-    // Returns "You recycled: 1x🥤 2x🍾"
     return "$prefix ${parts.join(' ')}";
   }
 
@@ -76,7 +69,9 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
       await ProfilePointsStore.addPoints(widget.userId, _sessionPoints);
 
       if (!mounted) return;
-      Navigator.of(context).pop();
+
+      // Go Home (not pop) so it behaves consistently
+      Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -89,13 +84,16 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
     const double horizontalPadding = 22;
     const double gap = 18;
+
     final double buttonWidth = (size.width - (horizontalPadding * 2) - gap) / 2;
 
     return Scaffold(
       body: Stack(
         children: [
+          // Background
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -105,14 +103,32 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
             ),
           ),
 
+          // Back Arrow (Top Left) — EXACTLY like EventsPage (no background)
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 28),
+                  color: AppColors.textMain,
+                  onPressed: () {
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          // Content
           SafeArea(
-            bottom: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 horizontalPadding,
-                22,
+                72, // leave space for back arrow
                 horizontalPadding,
-                120,
+                24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,7 +144,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Buttons grid
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -145,6 +160,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                     ],
                   ),
                   const SizedBox(height: gap),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -161,6 +177,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                     ],
                   ),
                   const SizedBox(height: gap),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -191,7 +208,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
                   const SizedBox(height: 26),
 
-                  // Summary Row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -199,7 +215,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                         child: Text(
                           _getSummaryText(),
                           style: AppTexts.generalBody.copyWith(
-                            fontSize: 13, // Slightly smaller to fit everything
+                            fontSize: 13,
                             color: AppColors.textMain,
                             fontWeight: FontWeight.w600,
                           ),
@@ -232,13 +248,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                 ],
               ),
             ),
-          ),
-
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: MainNavBar(currentIndex: null),
           ),
         ],
       ),
