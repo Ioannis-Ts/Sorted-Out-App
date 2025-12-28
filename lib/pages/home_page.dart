@@ -10,6 +10,7 @@ import '../services/stats_store.dart';
 import '../widgets/profile_name_button.dart';
 import '../widgets/tons_collected_bar.dart';
 import 'events_page.dart';
+import 'qr_scan_page.dart';
 
 class HomePage extends StatelessWidget {
   final String userId;
@@ -180,7 +181,24 @@ class HomePage extends StatelessWidget {
                           );
                         },
                       ),
-                      QrButton(size: qrSize, onTap: () {}),
+                      QrButton(
+                        size: qrSize,
+                        onTap: () async {
+                          final result = await Navigator.of(context)
+                              .push<String>(
+                                MaterialPageRoute(
+                                  builder: (_) => const QrScanPage(),
+                                ),
+                              );
+
+                          if (result != null) {
+                            // For now: show it. Later you can parse and do actions (points, check-in, etc.)
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Scanned: $result')),
+                            );
+                          }
+                        },
+                      ),
                     ],
                   ),
 
