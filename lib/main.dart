@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 // import 'pages/test_page.dart'; // ή EventsPage, ανάλογα τι θέλεις ως αρχική
 import 'pages/home_page.dart';
-// import 'pages/map_page.dart';
+import 'pages/map_page.dart';
 import 'pages/ai_assistant_page.dart';
 import 'pages/login_page.dart';
 
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
               userId: testUserId,
             ),
         '/ai': (context) => const AiAssistantPage(),
-        // '/map': (context) => MapPage(userId: testUserId),
+        '/map': (context) => MapPage(),
       },
     );
   }
