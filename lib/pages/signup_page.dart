@@ -160,43 +160,43 @@ class _SignupPageState extends State<SignupPage> {
                     height: 55,
                     child: ElevatedButton(
                       onPressed: () async {
-                      // 1. Ελέγχουμε αν οι κωδικοί ταιριάζουν
-                        if (_passwordController.text != _confirmPasswordController.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Passwords do not match!")),
-                           );
-                         return;
-                        }
+  // 1. Ελέγχουμε αν οι κωδικοί ταιριάζουν
+  if (_passwordController.text != _confirmPasswordController.text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Passwords do not match!")),
+    );
+    return;
+  }
 
-                      // 2. Προσπάθεια εγγραφής
-                      try {
-                      // Δημιουργία χρήστη στο Authentication
-                          UserCredential userCredential = await FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                              email: _emailController.text.trim(),
-                              password: _passwordController.text.trim(),
-                              );
+  // 2. Προσπάθεια εγγραφής
+  try {
+    // Δημιουργία χρήστη στο Authentication
+    UserCredential userCredential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
 
-                      // 3. Αποθήκευση του Username στο Firestore (Βάση Δεδομένων)
-                      // Φτιάχνουμε έναν φάκελο 'users' και βάζουμε μέσα τα στοιχεία
-                           await FirebaseFirestore.instance
-                               .collection('users')
-                               .doc(userCredential.user!.uid)
-                              .set({
-                            'username': _usernameController.text.trim(),
-                            'email': _emailController.text.trim(),
-                            'uid': userCredential.user!.uid,
-                            });
+    // 3. Αποθήκευση στο 'Profiles' (Η αλλαγή που θέλει η ομάδα σου)
+    await FirebaseFirestore.instance
+        .collection('Profiles') // Προσοχή: Profiles με κεφαλαίο P
+        .doc(userCredential.user!.uid)
+        .set({
+      'name': _usernameController.text.trim(), // Το πεδίο είναι 'name'
+      'email': _emailController.text.trim(),
+      'uid': userCredential.user!.uid,
+      'totalpoints': 0, // Οι πόντοι ξεκινάνε από το 0
+    });
 
     // Αν όλα πάνε καλά, μήνυμα επιτυχίας και επιστροφή
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account created successfully!")),
       );
-      Navigator.pop(context); // Γυρνάμε στο Login για να συνδεθεί
+      Navigator.pop(context); // Γυρνάμε στο Login
     }
   } on FirebaseAuthException catch (e) {
-    // Διαχείριση λαθών (π.χ. το email υπάρχει ήδη)
+    // Διαχείριση λαθών
     String message = "Something went wrong";
     if (e.code == 'weak-password') {
       message = 'The password provided is too weak.';

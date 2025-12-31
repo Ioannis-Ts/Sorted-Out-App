@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -202,18 +203,24 @@ Align(
                       child: ElevatedButton(
                         onPressed: () async {
   try {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
+      // ... κώδικας login ...
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    // Αν πετύχει η σύνδεση, πήγαινε στο Home Page
-    // Χρησιμοποιούμε pushReplacement για να μην μπορεί να πατήσει "πίσω" και να γυρίσει στο login
-    if (context.mounted) {
-       Navigator.pushReplacementNamed(context, '/home'); 
-       // ΣΗΜΕΙΩΣΗ: Αν δεν έχεις ορίσει routes, χρησιμοποίησε:
-       // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
-    }
+      if (context.mounted) {
+        // ΑΝΤΙΚΑΤΑΣΤΑΣΗ ΤΗΣ ΠΛΟΗΓΗΣΗΣ ΕΔΩ:
+        // Αντί για το γενικό '/home', φτιάχνουμε τη διαδρομή δυναμικά με το σωστό ID
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              userId: userCredential.user!.uid, // <--- ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ!
+            ),
+          ),
+        );
+      }
 
   } on FirebaseAuthException catch (e) {
     // Αν γίνει λάθος (λάθος κωδικός ή email)

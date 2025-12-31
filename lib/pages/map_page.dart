@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -109,14 +110,27 @@ void _loadBins() {
   }
 
   Future<void> _saveBinToFirebase(LatLng pos, String type, String name) async {
-    await FirebaseFirestore.instance.collection('bins').add({
-      'lat': pos.latitude,
-      'lng': pos.longitude,
-      'type': type,
-      'name': name.isEmpty ? 'Νέος Κάδος' : name,
-      'added_at': FieldValue.serverTimestamp(),
+    // ... (αφού αποθηκευτεί ο κάδος) ...
+
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user != null) {
+    // --- ΑΛΛΑΓΗ ΕΔΩ ---
+    await FirebaseFirestore.instance
+        .collection('Profiles') // Ψάχνουμε στο Profiles
+        .doc(user.uid)
+        .update({
+      // Αυξάνουμε το 'totalpoints' αντί για το 'points'
+      'totalpoints': FieldValue.increment(10), 
     });
+
+    if (mounted) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ο κάδος προστέθηκε! Κέρδισες 10 πόντους! 🎉')),
+      );
+    }
   }
+}
 
   // --- ΝΕΑ ΛΕΙΤΟΥΡΓΙΑ: BOTTOM SHEET ΓΙΑ ΔΙΑΓΡΑΦΗ ---
   void _showBinOptions(String docId, String name, String type) {
