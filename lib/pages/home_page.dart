@@ -287,7 +287,7 @@ class HomePage extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: MainNavBar(currentIndex: 1),
+            child: MainNavBar(currentIndex: 1, currentUserId: userId),
           ),
         ],
       ),

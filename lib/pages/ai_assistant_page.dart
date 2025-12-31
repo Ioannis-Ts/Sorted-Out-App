@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:firebase_auth/firebase_auth.dart'; // <--- 1. ΠΡΟΣΘΗΚΗ IMPORT
 
 import '../theme/app_variables.dart';
 import '../widgets/main_nav_bar.dart';
@@ -29,6 +30,9 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   String? _rulesData;
 
   static const String _modelName = 'gemini-2.0-flash';
+  
+  // <--- 2. ΒΡΙΣΚΟΥΜΕ ΤΟ ID ΤΟΥ ΧΡΗΣΤΗ ---
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
@@ -61,7 +65,6 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
   // 3) INITIALIZE GEMINI (template style)
   void _initGemini() {
-    // ✅ EXACTLY LIKE YOUR TEMPLATE
     const apiKeyM = Secret;
 
     if (apiKeyM.trim().isEmpty) {
@@ -267,9 +270,9 @@ CORE RULES:
                         currentUserTextColor: AppColors.textMain,
                         messageDecorationBuilder:
                             (
-                              ChatMessage msg,
-                              ChatMessage? previous,
-                              ChatMessage? next,
+                            ChatMessage msg,
+                            ChatMessage? previous,
+                            ChatMessage? next,
                             ) {
                               final bool isMe = msg.user.id == _currentUser.id;
                               return BoxDecoration(
@@ -294,11 +297,12 @@ CORE RULES:
             ),
           ),
 
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: MainNavBar(currentIndex: 0),
+            // <--- 3. ΠΕΡΝΑΜΕ ΤΟ ID ΣΤΟ NAVBAR ---
+            child: MainNavBar(currentIndex: 0, currentUserId: currentUserId),
           ),
         ],
       ),

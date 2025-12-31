@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
+import '../pages/home_page.dart'; // <--- Χρειαζόμαστε το HomePage
+// import '../pages/ai_assistant_page.dart'; // Αν έχεις τη σελίδα AI, βγάλε το σχόλιο
+// import '../pages/map_page.dart'; // Αν έχεις τη σελίδα Map, βγάλε το σχόλιο
 
 class MainNavBar extends StatelessWidget {
-  final int? currentIndex; // 0 = AI, 1 = home, 2 = map. null = none active
+  final int? currentIndex; 
+  final String currentUserId; // <--- ΝΕΟ: Πρέπει να ξέρουμε ΠΟΙΟΣ είναι ο χρήστης
 
-  const MainNavBar({super.key, required this.currentIndex});
+  const MainNavBar({
+    super.key, 
+    required this.currentIndex,
+    required this.currentUserId, // Υποχρεωτικό πλέον
+  });
 
   void _go(BuildContext context, int index) {
     if (currentIndex != null && currentIndex == index) return;
 
+    // Ειδική διαχείριση για το HOME για να μην πηγαίνει στον Tester
+    if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => HomePage(userId: currentUserId), // Περνάμε το σωστό ID
+        ),
+      );
+      return;
+    }
+
+    // Για τα υπόλοιπα χρησιμοποιούμε τα routes
     final route = switch (index) {
       0 => '/ai',
-      1 => '/home',
       2 => '/map',
       _ => '/home',
     };
@@ -88,6 +106,7 @@ class _NavItem extends StatelessWidget {
         isActive ? pressedAsset : notPressedAsset,
         width: 64,
         height: 64,
+        errorBuilder: (context, error, stackTrace) => const Icon(Icons.error), // Αν λείπει η εικόνα
       ),
     );
   }
