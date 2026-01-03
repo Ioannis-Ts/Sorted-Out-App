@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // <--- 1. ΠΡΟΣΘΗΚΗ FIRESTORE
 import '../theme/app_variables.dart';
-import 'recycle_points_page.dart';
+
 import '../widgets/main_nav_bar.dart';
 import '../widgets/tree_progress_button.dart';
 import '../widgets/points_cloud.dart';
 import '../widgets/events_button.dart';
 import '../widgets/qr_button.dart';
 import '../services/stats_store.dart';
+import '../widgets/profile_name_button.dart';
 import '../widgets/tons_collected_bar.dart';
-import 'events_page.dart';
-import 'qr_scan_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-// ΣΗΜΕΙΩΣΗ: Αφαίρεσα το import του 'profile_name_button.dart'
-// γιατί θα το φτιάξουμε εδώ τοπικά για να διαβάζει από το 'Profiles'.
+import 'events_page.dart';
+import 'recycle_points_page.dart';
+import 'qr_scan_page.dart';
 
 class HomePage extends StatelessWidget {
   final String userId;
@@ -35,7 +33,6 @@ class HomePage extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // --- DYNAMIC SIZES ---
     final double treeSize = screenHeight * 0.27;
     final double cloudWidth = screenWidth * 0.80;
     final double cloudHeight = screenHeight * 0.055;
@@ -63,86 +60,8 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
-                  // --- 2. PROFILE SECTION ΜΕ LOGOUT ---
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('Profiles')
-                        .doc(userId)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Text("Loading...");
-                      }
-                      
-                      var data = snapshot.data!.data() as Map<String, dynamic>?;
-                      String userName = data?['name'] ?? 'User'; 
-
-                      // Τυλίγουμε το Container με GestureDetector για να ακούει τα κλικ
-                      return GestureDetector(
-                        onTap: () {
-                          // Εμφάνιση παραθύρου επιβεβαίωσης
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Αποσύνδεση'),
-                              content: const Text('Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context), // Ακύρωση
-                                  child: const Text('Όχι'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    // 1. Κλείνουμε το παράθυρο διαλόγου
-                                    Navigator.pop(context);
-                                    
-                                    // 2. Αποσύνδεση από το Firebase
-                                    await FirebaseAuth.instance.signOut();
-
-                                    // 3. Επιστροφή στο Login και καθαρισμός ιστορικού
-                                    if (context.mounted) {
-                                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                                    }
-                                  },
-                                  child: const Text('Ναι, Έξοδος', style: TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9), // (Αντικατέστησε το withOpacity αν σου βγάζει warning)
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.logout, color: Colors.redAccent, size: 20), // Άλλαξα το εικονίδιο σε logout για να είναι προφανές (ή άσε το person)
-                              const SizedBox(width: 8),
-                              Text(
-                                userName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  // --- PROFILE ---
+                  ProfileNameButton(userId: userId),
 
                   const Spacer(flex: 1),
 
@@ -206,7 +125,7 @@ class HomePage extends StatelessWidget {
 
                   const Spacer(flex: 2),
 
-                  // --- TREE ---
+                  // --- TREE (tap -> RecyclePointsPage) ---
                   Align(
                     alignment: Alignment.center,
                     child: TreeProgressButton(
@@ -227,8 +146,6 @@ class HomePage extends StatelessWidget {
                   const Spacer(flex: 2),
 
                   // --- CLOUD ---
-                  // ΠΡΟΣΟΧΗ: Αν το PointsCloud διαβάζει εσωτερικά από τη βάση,
-                  // ίσως χρειαστεί αλλαγή στο αρχείο 'points_cloud.dart' αν δείχνει 0.
                   Align(
                     alignment: Alignment.center,
                     child: PointsCloud(
@@ -288,6 +205,8 @@ class HomePage extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: MainNavBar(currentIndex: 1, currentUserId: userId),
+            // If your MainNavBar does NOT have currentUserId, change to:
+            // child: MainNavBar(currentIndex: 1),
           ),
         ],
       ),

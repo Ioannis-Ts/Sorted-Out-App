@@ -70,8 +70,8 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
       if (!mounted) return;
 
-      // Go Home (not pop) so it behaves consistently
-      Navigator.of(context).pushReplacementNamed('/home');
+      // ✅ FIX: real back behavior
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -103,7 +103,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
             ),
           ),
 
-          // Back Arrow (Top Left) — EXACTLY like EventsPage (no background)
+          // Back Arrow (Top Left)
           Positioned(
             top: 0,
             left: 0,
@@ -114,7 +114,8 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                   icon: const Icon(Icons.arrow_back, size: 28),
                   color: AppColors.textMain,
                   onPressed: () {
-                    Navigator.of(context).pushReplacementNamed('/home');
+                    // ✅ FIX: real back behavior
+                    Navigator.of(context).pop();
                   },
                 ),
               ),
@@ -126,7 +127,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 horizontalPadding,
-                72, // leave space for back arrow
+                72,
                 horizontalPadding,
                 24,
               ),
@@ -224,11 +225,8 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-
                       PointsPill(points: _sessionPoints),
-
                       const SizedBox(width: 8),
-
                       ResetIconButton(
                         onTap: _resetPoints,
                         height: 40,
