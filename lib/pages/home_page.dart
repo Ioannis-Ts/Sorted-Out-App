@@ -13,6 +13,7 @@ import '../widgets/tons_collected_bar.dart';
 import 'events_page.dart';
 import 'recycle_points_page.dart';
 import 'qr_scan_page.dart';
+import 'about_page.dart';
 
 class HomePage extends StatelessWidget {
   final String userId;
@@ -60,8 +61,47 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- PROFILE ---
-                  ProfileNameButton(userId: userId),
+                  // --- TOP BAR: PROFILE + ABOUT ---
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ProfileNameButton(userId: userId),
+
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AboutPage(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.main.withOpacity(0.85),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '?',
+                            style: AppTexts.generalTitle.copyWith(
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const Spacer(flex: 1),
 
