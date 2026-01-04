@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/bug_report_service.dart';
+import '../theme/app_variables.dart'; // ✅ Για τα AppColors και AppTexts
 
 class BugReportSheet extends StatefulWidget {
   const BugReportSheet({super.key, required this.source});
@@ -47,38 +48,82 @@ class _BugReportSheetState extends State<BugReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          16 + MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Report a bug',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+    // Αφαιρέσαμε το Dialog/Center.
+    // Χρησιμοποιούμε Container που πιάνει το πλάτος και κάθεται κάτω.
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.ourYellow, // ✅ Κίτρινο Πλαίσιο
+        // Στρογγυλεύουμε μόνο τις πάνω γωνίες αφού είναι στο κάτω μέρος
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      // Προσθέτουμε padding για το keyboard (viewInsets.bottom)
+      padding: EdgeInsets.fromLTRB(
+        20,
+        24,
+        20,
+        20 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // Πιάνει όσο χώρο χρειάζεται
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // --- TITLE ---
+          Text(
+            'Report a bug',
+            textAlign: TextAlign.center,
+            style: AppTexts.generalTitle.copyWith( // ✅ General Title Style
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _controller,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Περιέγραψε τι συνέβη…',
-                border: OutlineInputBorder(),
+          ),
+          
+          const SizedBox(height: 16),
+
+          // --- TEXT FIELD ---
+          TextField(
+            controller: _controller,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'Περιέγραψε τι συνέβη…',
+              filled: true,
+              fillColor: Colors.white, // ✅ Λευκό φόντο στο πεδίο
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // --- BUTTON ---
+          ElevatedButton(
+            onPressed: _sending ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.main, // ✅ Χρώμα Main
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: const StadiumBorder(), // ✅ Οβάλ σχήμα
+              elevation: 0,
+            ),
+            child: Text(
+              _sending ? 'Sending…' : 'Submit',
+              style: AppTexts.generalTitle.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _sending ? null : _submit,
-              child: Text(_sending ? 'Sending…' : 'Submit'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
