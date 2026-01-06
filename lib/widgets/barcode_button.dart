@@ -5,19 +5,15 @@ class QrButton extends StatelessWidget {
   final double size;
   final VoidCallback? onTap;
 
-  const QrButton({
-    super.key,
-    this.size = 72,
-    this.onTap,
-  });
+  const QrButton({super.key, this.size = 72, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       // 1. Add margin to give the shadow space to exist without being clipped
       // The shadow extends downwards and outwards, so we need space around the circle.
-      margin: const EdgeInsets.all(12), 
-      
+      margin: const EdgeInsets.all(12),
+
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.main,
@@ -38,9 +34,11 @@ class QrButton extends StatelessWidget {
           child: Container(
             width: size,
             height: size,
-            padding: const EdgeInsets.all(2), // Adjust padding for the image size inside
+            padding: const EdgeInsets.all(
+              2,
+            ), // Adjust padding for the image size inside
             child: Image.asset(
-              'assets/images/qr.png',
+              'assets/images/barcode.png',
               fit: BoxFit.contain,
             ),
           ),

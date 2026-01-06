@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // <--- NEW IMPORT
 import '../theme/app_variables.dart';
 import '../widgets/recycle_material_button.dart';
 import '../widgets/points_pill.dart';
@@ -63,14 +64,23 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
   Future<void> _submit() async {
     if (_submitting) return;
 
+    // Prevent submitting 0 points
+    if (_sessionPoints == 0) return;
+
     setState(() => _submitting = true);
 
     try {
+      // 1. Update Personal Profile Points
       await ProfilePointsStore.addPoints(widget.userId, _sessionPoints);
+
+      // 2. Update Global Stats (Stats -> 2025 -> pointscollected)
+      // We use FieldValue.increment to handle concurrent updates safely.
+      await FirebaseFirestore.instance.collection('Stats').doc('2025').update({
+        'pointscollected': FieldValue.increment(_sessionPoints),
+      });
 
       if (!mounted) return;
 
-      // ✅ FIX: real back behavior
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -114,7 +124,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                   icon: const Icon(Icons.arrow_back, size: 28),
                   color: AppColors.textMain,
                   onPressed: () {
-                    // ✅ FIX: real back behavior
                     Navigator.of(context).pop();
                   },
                 ),

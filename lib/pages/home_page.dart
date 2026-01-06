@@ -5,14 +5,14 @@ import '../widgets/main_nav_bar.dart';
 import '../widgets/tree_progress_button.dart';
 import '../widgets/points_cloud.dart';
 import '../widgets/events_button.dart';
-import '../widgets/qr_button.dart';
+import '../widgets/barcode_button.dart';
 import '../services/stats_store.dart';
 import '../widgets/profile_name_button.dart';
 import '../widgets/tons_collected_bar.dart';
 
 import 'events_page.dart';
 import 'recycle_points_page.dart';
-import 'qr_scan_page.dart';
+import 'barcode_scan_page.dart';
 import 'about_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -219,7 +219,7 @@ class HomePage extends StatelessWidget {
                           final result = await Navigator.of(context)
                               .push<String>(
                                 MaterialPageRoute(
-                                  builder: (_) => const QrScanPage(),
+                                  builder: (_) => const BarcodeScanPage(),
                                 ),
                               );
 
