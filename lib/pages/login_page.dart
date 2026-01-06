@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'signup_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
+import '../services/profile_session_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -204,19 +205,21 @@ Align(
                         onPressed: () async {
   try {
       // ... κώδικας login ...
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
+      // 🧠 ΕΔΩ γίνεται ΟΛΗ η λογική reset / lastlogin
+      await ProfileSessionService.handleLogin(userCredential.user!.uid,);
+
       if (context.mounted) {
-        // ΑΝΤΙΚΑΤΑΣΤΑΣΗ ΤΗΣ ΠΛΟΗΓΗΣΗΣ ΕΔΩ:
-        // Αντί για το γενικό '/home', φτιάχνουμε τη διαδρομή δυναμικά με το σωστό ID
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => HomePage(
-              userId: userCredential.user!.uid, // <--- ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ!
+              userId: userCredential.user!.uid,
             ),
           ),
         );

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
 
-class TonsCollectedBar extends StatelessWidget {
+class PointsCollectedBar extends StatelessWidget {
   final int year;
-  final num tons;
-  final num maxTons;
+  final num points;
+  final num maxPoints;
 
-  const TonsCollectedBar({
+  const PointsCollectedBar({
     super.key,
     required this.year,
-    required this.tons,
-    required this.maxTons,
+    required this.points,
+    required this.maxPoints,
   });
 
   String _formatNumber(num n) {
@@ -27,7 +27,7 @@ class TonsCollectedBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = (maxTons <= 0) ? 0.0 : (tons / maxTons).clamp(0.0, 1.0);
+    final ratio = (maxPoints <= 0) ? 0.0 : (points / maxPoints).clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +89,7 @@ class TonsCollectedBar extends StatelessWidget {
                 const SizedBox(width: 14),
 
                 Text(
-                  _formatNumber(tons),
+                  _formatNumber(points),
                   style: AppTexts.generalTitle.copyWith(
                     fontSize: 12, // ✅ Smaller font size
                     fontWeight: FontWeight.w600, // ✅ Boldness ensures visibility

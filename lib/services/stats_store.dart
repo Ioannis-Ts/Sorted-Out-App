@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class StatsStore {
-  static Stream<num> tonsStream(int year) {
+  static Stream<num> pointsStream(int year) {
     return FirebaseFirestore.instance
         .collection('Stats')
         .doc(year.toString())
@@ -9,7 +9,7 @@ class StatsStore {
         .map((doc) {
           final data = doc.data();
           if (data == null) return 0;
-          final v = data['tons'];
+          final v = data['pointscollected'];
           if (v is num) return v;
           return 0;
         });

@@ -182,10 +182,11 @@ class _SignupPageState extends State<SignupPage> {
         .collection('Profiles') // Προσοχή: Profiles με κεφαλαίο P
         .doc(userCredential.user!.uid)
         .set({
-      'name': _usernameController.text.trim(), // Το πεδίο είναι 'name'
+      'name': _usernameController.text.trim(),
       'email': _emailController.text.trim(),
       'uid': userCredential.user!.uid,
-      'totalpoints': 0, // Οι πόντοι ξεκινάνε από το 0
+      'totalpoints': 0,
+      'lastlogin': Timestamp.now(),
     });
 
     // Αν όλα πάνε καλά, μήνυμα επιτυχίας και επιστροφή

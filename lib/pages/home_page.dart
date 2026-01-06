@@ -8,7 +8,7 @@ import '../widgets/events_button.dart';
 import '../widgets/barcode_button.dart';
 import '../services/stats_store.dart';
 import '../widgets/profile_name_button.dart';
-import '../widgets/tons_collected_bar.dart';
+import '../widgets/points_collected_bar.dart';
 
 import 'events_page.dart';
 import 'recycle_points_page.dart';
@@ -122,7 +122,7 @@ class HomePage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Tons Collected',
+                        'Points Collected',
                         style: AppTexts.generalBody.copyWith(
                           fontWeight: FontWeight.w700,
                           height: 1.0,
@@ -135,26 +135,26 @@ class HomePage extends StatelessWidget {
 
                   // --- STATS BARS ---
                   StreamBuilder<num>(
-                    stream: StatsStore.tonsStream(yearA),
+                    stream: StatsStore.pointsStream(yearA),
                     builder: (context, snapA) {
-                      final tonsA = snapA.data ?? 0;
+                      final pointsA = snapA.data ?? 0;
                       return StreamBuilder<num>(
-                        stream: StatsStore.tonsStream(yearB),
+                        stream: StatsStore.pointsStream(yearB),
                         builder: (context, snapB) {
-                          final tonsB = snapB.data ?? 0;
-                          final maxTons = (tonsA > tonsB) ? tonsA : tonsB;
+                          final pointsB = snapB.data ?? 0;
+                          final maxPoints = (pointsA > pointsB) ? pointsA : pointsB;
                           return Column(
                             children: [
-                              TonsCollectedBar(
+                              PointsCollectedBar(
                                 year: yearA,
-                                tons: tonsA,
-                                maxTons: maxTons,
+                                points: pointsA,
+                                maxPoints: maxPoints,
                               ),
                               const SizedBox(height: 8),
-                              TonsCollectedBar(
+                              PointsCollectedBar(
                                 year: yearB,
-                                tons: tonsB,
-                                maxTons: maxTons,
+                                points: pointsB,
+                                maxPoints: maxPoints,
                               ),
                             ],
                           );

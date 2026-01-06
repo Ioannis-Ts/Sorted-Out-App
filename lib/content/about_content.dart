@@ -9,9 +9,9 @@ class AboutContent {
           'so the journey never stops.',
     },
     {
-      'title': 'Scan with QR ♻️',
+      'title': 'Scan the Barcode ♻️',
       'body':
-          'Not sure where something goes? Head to the QR page and scan an item to instantly see '
+          'Not sure where something goes? Head to the Barcode page and scan an item to instantly see '
           'which recycling bin it belongs to. Recycling made simple.',
     },
     {

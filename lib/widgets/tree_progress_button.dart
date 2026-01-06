@@ -12,7 +12,7 @@ class TreeProgressButton extends StatelessWidget {
   const TreeProgressButton({
     super.key,
     required this.userId,
-    this.goal = 100,
+    this.goal = 250,
     this.size = 88,
     this.ringWidth = 7,
     this.onTap,
