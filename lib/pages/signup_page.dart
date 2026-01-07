@@ -39,9 +39,24 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // 🔙 Back button (ΑΡΙΣΤΕΡΑ)
+                Container(
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+
+                // 📝 Texts
                 const Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,19 +86,6 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ],
                 ),
-                // Κουμπί επιστροφής (Βελάκι δεξιά όπως στο Figma)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context); // Επιστροφή στο Login
-                    },
-                  ),
-                )
               ],
             ),
           ),
@@ -263,10 +265,17 @@ class _SignupPageState extends State<SignupPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF5E35B1), width: 2),
         ),
-        suffixIcon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+          onPressed: () {
+            controller.clear();
+            setState(() {});
+          },
+        ),
       ),
     );
   }
+
 
   // Για πεδία κωδικών
   Widget _buildPasswordField({
@@ -302,9 +311,12 @@ class _SignupPageState extends State<SignupPage> {
               ),
               onPressed: onVisibilityChanged,
             ),
-            const Padding(
-              padding: EdgeInsets.only(right: 8.0),
-              child: Icon(Icons.cancel_outlined, color: Colors.grey),
+            IconButton(
+              icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+              onPressed: () {
+                controller.clear();
+                setState(() {});
+              },
             ),
           ],
         ),

@@ -95,7 +95,13 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Color(0xFF5E35B1), width: 2),
                         ),
-                        suffixIcon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                          onPressed: () {
+                            _emailController.clear();
+                            setState(() {}); // για να ανανεωθεί το TextField
+                          },
+                        ),
                       ),
                     ),
 
@@ -135,9 +141,15 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                               },
                             ),
-                             const Padding(
-                              padding: EdgeInsets.only(right: 8.0),
-                              child: Icon(Icons.cancel_outlined, color: Colors.grey),
+                             Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                                onPressed: () {
+                                  _passwordController.clear();
+                                  setState(() {});
+                                },
+                              ),
                             ),
                           ],
                         ),
