@@ -7,6 +7,7 @@ class EventModel {
   final DateTime date;
   final String description;
   final List<String> imageUrls;
+  final String creatorId;
 
   EventModel({
     required this.id,
@@ -15,6 +16,7 @@ class EventModel {
     required this.date,
     required this.description,
     required this.imageUrls,
+    required this.creatorId,
   });
 
   factory EventModel.fromDoc(DocumentSnapshot doc) {
@@ -25,8 +27,8 @@ class EventModel {
       location: data['location'] as String,
       date: (data['date'] as Timestamp).toDate(),
       description: data['description'] as String? ?? '',
-      imageUrls:
-          (data['imageUrls'] as List<dynamic>? ?? []).cast<String>(),
+      imageUrls: (data['imageUrls'] as List<dynamic>? ?? []).cast<String>(),
+      creatorId: data['creatorId'] as String,
     );
   }
 
@@ -37,6 +39,7 @@ class EventModel {
       'date': Timestamp.fromDate(date),
       'description': description,
       'imageUrls': imageUrls,
+      'creatorId': creatorId,
     };
   }
 }

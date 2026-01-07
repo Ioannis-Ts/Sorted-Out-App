@@ -208,7 +208,7 @@ class HomePage extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const EventsPage(),
+                              builder: (_) => EventsPage(userId: userId),
                             ),
                           );
                         },

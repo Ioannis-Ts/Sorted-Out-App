@@ -3,16 +3,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_variables.dart';
 
 class CreateEventPage extends StatefulWidget {
-  const CreateEventPage({super.key});
+  final String userId;
+  final String? eventId; // null = create, όχι null = edit
+
+  const CreateEventPage({
+    super.key,
+    required this.userId,
+    this.eventId,
+  });
 
   @override
-  _CreateEventPageState createState() => _CreateEventPageState();
+  State<CreateEventPage> createState() => _CreateEventPageState();
 }
 
 class _CreateEventPageState extends State<CreateEventPage> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -21,25 +28,54 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   bool _isEditingTitle = false;
   bool _isEditingLocation = false;
+  bool _loading = false;
 
-  // --- LOGIC: Create Event ---
-  Future<void> _createEvent() async {
-    final title = _titleController.text.trim();
-    final location = _locationController.text.trim();
-    final description = _descriptionController.text.trim();
+  bool get isEdit => widget.eventId != null;
 
-    if (title.isEmpty ||
-        location.isEmpty ||
-        description.isEmpty ||
+  @override
+  void initState() {
+    super.initState();
+    if (isEdit) _loadEvent();
+  }
+
+  Future<void> _loadEvent() async {
+    setState(() => _loading = true);
+
+    final doc = await FirebaseFirestore.instance
+        .collection('Events')
+        .doc(widget.eventId)
+        .get();
+
+    final data = doc.data()!;
+    final dt = (data['date'] as Timestamp).toDate();
+
+    _titleController.text = data['title'];
+    _locationController.text = data['location'];
+    _descriptionController.text = data['description'];
+    _selectedDate = DateTime(dt.year, dt.month, dt.day);
+    _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
+
+    final imgs = (data['imageUrls'] as List?)?.cast<String>() ?? [];
+    for (int i = 0; i < imgs.length && i < 4; i++) {
+      _imageUrls[i] = imgs[i];
+    }
+
+    setState(() => _loading = false);
+  }
+
+  Future<void> _saveEvent() async {
+    if (_titleController.text.isEmpty ||
+        _locationController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
         _selectedDate == null ||
         _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill: Title, Location, Date, Time, Description')),
+        const SnackBar(content: Text('Please fill all fields')),
       );
       return;
     }
 
-    final eventDateTime = DateTime(
+    final dateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
       _selectedDate!.day,
@@ -47,78 +83,34 @@ class _CreateEventPageState extends State<CreateEventPage> {
       _selectedTime!.minute,
     );
 
-    try {
-      await FirebaseFirestore.instance.collection('Events').add({
-        'title': title,
-        'location': location,
-        'date': Timestamp.fromDate(eventDateTime),
-        'description': description,
-        'imageUrls': _imageUrls.where((e) => e.trim().isNotEmpty).toList(),
-      });
+    final data = {
+      'title': _titleController.text.trim(),
+      'location': _locationController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'date': Timestamp.fromDate(dateTime),
+      'imageUrls': _imageUrls.where((e) => e.isNotEmpty).toList(),
+      'creatorId': widget.userId,
+    };
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event created successfully!')),
-      );
-      Navigator.pop(context); // Go back to Home/Events page
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create event: $e')),
-      );
+    if (isEdit) {
+      await FirebaseFirestore.instance
+          .collection('Events')
+          .doc(widget.eventId)
+          .update(data);
+    } else {
+      await FirebaseFirestore.instance.collection('Events').add(data);
     }
+
+    if (mounted) Navigator.pop(context, true);
   }
 
-  void _setImageAtSlot(int slotIndex, String url) {
-    setState(() {
-      _imageUrls[slotIndex] = url;
-    });
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2101),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-    );
-
-    if (pickedTime != null) {
-      setState(() {
-        _selectedTime = pickedTime;
-      });
-    }
-  }
-
-  Future<void> _onAddImagePressed(int slotIndex) async {
-    final url = await _pickUrlDialog();
-    if (url != null && url.isNotEmpty) _setImageAtSlot(slotIndex, url);
-  }
-
-  Future<String?> _pickUrlDialog() async {
+  Future<void> _pickImage(int index) async {
     final controller = TextEditingController();
-
     final url = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('Paste image URL'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'https://...'),
-        ),
+        content: TextField(controller: controller),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
@@ -129,23 +121,29 @@ class _CreateEventPageState extends State<CreateEventPage> {
       ),
     );
 
-    return url?.trim();
+    if (url != null && url.isNotEmpty) {
+      setState(() => _imageUrls[index] = url);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateText = (_selectedDate == null)
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final dateText = _selectedDate == null
         ? 'Date'
         : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}';
 
-    final timeText = (_selectedTime == null)
+    final timeText = _selectedTime == null
         ? 'Time'
         : '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Background Image
+          // Background
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -155,34 +153,25 @@ class _CreateEventPageState extends State<CreateEventPage> {
             ),
           ),
 
-          // 2. Content
           SafeArea(
             child: Column(
               children: [
-                // --- HEADER (Back Arrow + Title + Save Button) ---
+                // HEADER
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // ✅ Back button (Top Left)
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, size: 28),
-                        color: AppColors.textMain,
+                        icon: const Icon(Icons.arrow_back),
                         onPressed: () => Navigator.pop(context),
                       ),
-                      
-                      // Title
                       Text(
-                        'Add Event',
-                        style: AppTexts.generalTitle.copyWith(
-                          fontSize: 28,
-                        ),
+                        isEdit ? 'Edit Event' : 'Add Event',
+                        style: AppTexts.generalTitle.copyWith(fontSize: 28),
                       ),
-                      
-                      // Save button (Top Right)
                       TextButton(
-                        onPressed: _createEvent,
+                        onPressed: _saveEvent,
                         child: Text(
                           'Save',
                           style: AppTexts.generalBody.copyWith(
@@ -196,81 +185,51 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   ),
                 ),
 
-                // --- SCROLLABLE FORM ---
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 10),
-                        
-                        // Event Title Input
+                        // TITLE
                         Center(
                           child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isEditingTitle = true;
-                              });
-                            },
+                            onTap: () => setState(() => _isEditingTitle = true),
                             child: _isEditingTitle
                                 ? TextField(
                                     controller: _titleController,
                                     autofocus: true,
                                     textAlign: TextAlign.center,
-                                    style: AppTexts.generalTitle.copyWith(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: 'Event Title',
-                                    ),
-                                    onEditingComplete: () {
-                                      setState(() {
-                                        _isEditingTitle = false;
-                                      });
-                                    },
+                                    style: AppTexts.generalTitle.copyWith(fontSize: 28),
+                                    decoration: const InputDecoration(border: InputBorder.none),
+                                    onEditingComplete: () =>
+                                        setState(() => _isEditingTitle = false),
                                   )
                                 : Text(
                                     _titleController.text.isEmpty
                                         ? 'Event Title'
                                         : _titleController.text,
-                                    style: AppTexts.generalTitle.copyWith(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                    style: AppTexts.generalTitle.copyWith(fontSize: 28),
                                   ),
                           ),
                         ),
+
                         const SizedBox(height: 20),
 
-                        // Location - Date - Time
+                        // LOCATION - DATE - TIME (ΙΔΙΟ)
                         Row(
                           children: [
-                            // Location
                             Expanded(
                               child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _isEditingLocation = true;
-                                  });
-                                },
+                                onTap: () => setState(() => _isEditingLocation = true),
                                 child: _isEditingLocation
                                     ? TextField(
                                         controller: _locationController,
                                         autofocus: true,
-                                        style: AppTexts.generalBody.copyWith(fontSize: 16),
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Location',
-                                          isDense: true,
-                                        ),
-                                        onEditingComplete: () {
-                                          setState(() {
-                                            _isEditingLocation = false;
-                                          });
-                                        },
+                                        decoration:
+                                            const InputDecoration(border: InputBorder.none),
+                                        onEditingComplete: () =>
+                                            setState(() => _isEditingLocation = false),
                                       )
                                     : Text(
                                         _locationController.text.isEmpty
@@ -283,131 +242,81 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                       ),
                               ),
                             ),
-
-                            Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
-
-                            // Date
+                            Text(' - ', style: AppTexts.generalBody),
                             GestureDetector(
                               onTap: () async {
-                                await _selectDate(context);
-                                if (_selectedDate != null) {
-                                  if (mounted) await _selectTime(context);
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (d != null) {
+                                  final t = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (t != null) {
+                                    setState(() {
+                                      _selectedDate = d;
+                                      _selectedTime = t;
+                                    });
+                                  }
                                 }
                               },
-                              child: Text(
-                                dateText,
-                                style: AppTexts.generalBody.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              child: Text(dateText, style: AppTexts.generalBody),
                             ),
-
-                            Text(' - ', style: AppTexts.generalBody.copyWith(fontSize: 16)),
-
-                            // Time
-                            GestureDetector(
-                              onTap: () async {
-                                if (_selectedDate == null) {
-                                  await _selectDate(context);
-                                  if (_selectedDate == null) return;
-                                }
-                                if (mounted) await _selectTime(context);
-                              },
-                              child: Text(
-                                timeText,
-                                style: AppTexts.generalBody.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
+                            Text(' - ', style: AppTexts.generalBody),
+                            Text(timeText, style: AppTexts.generalBody),
                           ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Description Label
-                        Text(
-                          'Description',
-                          style: AppTexts.generalTitle.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
                         ),
 
                         const SizedBox(height: 12),
 
-                        // Description Box
+                        // DESCRIPTION
+                        Text('Description', style: AppTexts.generalTitle.copyWith(fontSize: 16)),
+                        const SizedBox(height: 8),
                         Container(
-                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: AppColors.ourYellow,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.all(16),
                           child: TextField(
                             controller: _descriptionController,
                             maxLines: 8,
-                            style: AppTexts.generalBody.copyWith(
-                              fontSize: 14,
-                              color: AppColors.textMain,
-                            ),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'What will your event be about?',
-                              hintStyle: AppTexts.generalBody.copyWith(
-                                fontSize: 14,
-                                color: AppColors.grey,
-                              ),
-                            ),
+                            decoration: const InputDecoration(border: InputBorder.none),
                           ),
                         ),
 
                         const SizedBox(height: 20),
 
-                        // Pictures Label
-                        Text(
-                          'Pictures',
-                          style: AppTexts.generalTitle.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Pictures Box
+                        // IMAGES (ΚΙΤΡΙΝΟ BOX ΟΠΩΣ ΠΡΙΝ)
+                        Text('Pictures', style: AppTexts.generalTitle.copyWith(fontSize: 16)),
+                        const SizedBox(height: 8),
                         Container(
-                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: AppColors.ourYellow,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildAddPhotoBox(0),
-                                  const SizedBox(width: 16),
-                                  _buildAddPhotoBox(1),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildAddPhotoBox(2),
-                                  const SizedBox(width: 16),
-                                  _buildAddPhotoBox(3),
-                                ],
-                              ),
+                              for (int i = 0; i < 4; i += 2)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Row(
+                                    children: [
+                                      _imageBox(i),
+                                      const SizedBox(width: 12),
+                                      _imageBox(i + 1),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                        // Extra space at bottom for easy scrolling
+
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -418,47 +327,24 @@ class _CreateEventPageState extends State<CreateEventPage> {
           ),
         ],
       ),
-      // ✅ No BottomNavigationBar here
     );
   }
 
-  // Widget helper for photo boxes
-  Widget _buildAddPhotoBox(int slotIndex) {
-    final url = _imageUrls[slotIndex].trim();
-    final hasUrl = url.isNotEmpty;
-
+  Widget _imageBox(int index) {
+    final url = _imageUrls[index];
     return Expanded(
       child: AspectRatio(
         aspectRatio: 1,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.grey, width: 2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _onAddImagePressed(slotIndex),
+        child: InkWell(
+          onTap: () => _pickImage(index),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.grey),
               borderRadius: BorderRadius.circular(8),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: hasUrl
-                    ? Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Center(
-                          child: Icon(Icons.broken_image, size: 32, color: AppColors.grey),
-                        ),
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return const Center(child: CircularProgressIndicator());
-                        },
-                      )
-                    : const Center(
-                        child: Icon(Icons.add, size: 40, color: AppColors.grey),
-                      ),
-              ),
             ),
+            child: url.isEmpty
+                ? const Center(child: Icon(Icons.add, color: AppColors.grey))
+                : Image.network(url, fit: BoxFit.cover),
           ),
         ),
       ),

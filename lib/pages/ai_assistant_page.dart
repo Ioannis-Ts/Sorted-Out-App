@@ -156,8 +156,8 @@ CORE RULES:
     final double navBarHeight = 90.0;
 
     final botBubble = Colors.white;
-    final userBubble = AppColors.main.withOpacity(0.55);
-    final inputFill = Colors.white.withOpacity(0.9);
+    final userBubble = AppColors.main.withValues(alpha: 0.1);
+    final inputFill = Colors.white.withValues(alpha: 0.1);
 
     return Scaffold(
       body: Stack(

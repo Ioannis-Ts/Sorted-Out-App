@@ -7,7 +7,8 @@ import 'event_details_page.dart';
 import 'create_event_page.dart';
 
 class EventsPage extends StatefulWidget {
-  const EventsPage({super.key});
+  final String userId;
+  const EventsPage({super.key, required this.userId});
 
   @override
   State<EventsPage> createState() => _EventsPageState();
@@ -86,7 +87,7 @@ class _EventsPageState extends State<EventsPage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => EventDetailsPage(event: e),
+                                    builder: (_) => EventDetailsPage(event: e, currentUserId: widget.userId,),
                                   ),
                                 );
                               },
@@ -130,7 +131,7 @@ class _EventsPageState extends State<EventsPage> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => CreateEventPage(),
+                      builder: (_) => CreateEventPage(userId: widget.userId),
                     ),
                   );
                 },
