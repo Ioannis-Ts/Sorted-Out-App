@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,217 +21,283 @@ class _MapPageState extends State<MapPage> {
   );
 
   Set<Marker> _markers = {};
-  
-  // Παίρνουμε το ID του τρέχοντος χρήστη
-  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  // Marker icons
+  BitmapDescriptor? _blueIcon;
+  BitmapDescriptor? _yellowIcon;
+  BitmapDescriptor? _greyIcon;
+  BitmapDescriptor? _brownIcon;
+  BitmapDescriptor? _greenIcon;
+
+  bool _iconsLoaded = false;
+
+  final String currentUserId =
+      FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
     super.initState();
+    _loadMarkerIcons();
+  }
+
+  // =========================
+  // LOAD MARKER ICONS
+  // =========================
+  Future<void> _loadMarkerIcons() async {
+    _blueIcon   = await _createMarkerIcon('blue', size: 30);
+    _yellowIcon = await _createMarkerIcon('yellow', size: 30);
+    _greyIcon   = await _createMarkerIcon('grey', size: 30);
+    _brownIcon  = await _createMarkerIcon('brown', size: 30);
+    _greenIcon  = await _createMarkerIcon('green', size: 30);
+
+    setState(() => _iconsLoaded = true);
     _loadBins();
   }
 
-  void _loadBins() {
-    FirebaseFirestore.instance.collection('bins').snapshots().listen((snapshot) {
-      final Set<Marker> newMarkers = snapshot.docs.map((doc) {
-        final data = doc.data();
-        final isRecycle = data['type'] == 'recycle';
-        final name = data['name'] ?? 'Κάδος';
+  Future<BitmapDescriptor> _createMarkerIcon(
+    String color, {
+    int size = 30,
+  }) async {
+    final assetPath = 'assets/images/$color.png';
+    try {
+      final ByteData data = await rootBundle.load(assetPath);
+      final Uint8List bytes = data.buffer.asUint8List();
 
-        return Marker(
-          markerId: MarkerId(doc.id),
-          position: LatLng(data['lat'], data['lng']),
-          onTap: () {
-            _showBinOptions(doc.id, name, data['type']);
-          },
-          // ΕΠΙΣΤΡΟΦΗ ΣΤΑ ΧΡΩΜΑΤΑ (ΓΙΑ ΣΙΓΟΥΡΙΑ)
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            isRecycle ? BitmapDescriptor.hueBlue : BitmapDescriptor.hueOrange,
-          ),
-        );
-      }).toSet();
+      final ui.Codec codec = await ui.instantiateImageCodec(
+        bytes,
+        targetWidth: size,
+        targetHeight: size,
+      );
 
-      if (mounted) {
-        setState(() {
-          _markers = newMarkers;
-        });
-      }
-    });
-  }
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ByteData? resized =
+          await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
 
-  void _showAddBinDialog(LatLng position) {
-    String type = 'recycle';
-    final nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Προσθήκη Κάδου'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Όνομα',
-                hintText: 'π.χ. Κάδος Πλατείας',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => type = 'recycle',
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                  child: const Text('Ανακύκλωση', style: TextStyle(color: Colors.white)),
-                ),
-                ElevatedButton(
-                  onPressed: () => type = 'trash',
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                  child: const Text('Σκουπίδια', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Ακύρωση')),
-          TextButton(
-            onPressed: () {
-              _saveBinToFirebase(position, type, nameController.text);
-              Navigator.pop(context);
-            },
-            child: const Text('Προσθήκη'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _saveBinToFirebase(LatLng pos, String type, String name) async {
-    await FirebaseFirestore.instance.collection('bins').add({
-      'lat': pos.latitude,
-      'lng': pos.longitude,
-      'type': type,
-      'name': name.isEmpty ? 'Νέος Κάδος' : name,
-      'added_at': FieldValue.serverTimestamp(),
-    });
-
-    if (currentUserId.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('Profiles')
-          .doc(currentUserId)
-          .update({
-        'totalpoints': FieldValue.increment(10),
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ο κάδος προστέθηκε! Κέρδισες 10 πόντους! 🎉')),
-        );
-      }
+      return BitmapDescriptor.fromBytes(resized!.buffer.asUint8List());
+    } catch (e) {
+      return BitmapDescriptor.defaultMarker;
     }
   }
 
-  void _showBinOptions(String docId, String name, String type) {
-    showModalBottomSheet(
+  // =========================
+  // LOAD BINS
+  // =========================
+  void _loadBins() {
+    if (!_iconsLoaded) return;
+
+    FirebaseFirestore.instance
+        .collection('bins')
+        .snapshots()
+        .listen((snapshot) {
+      final Set<Marker> newMarkers = {};
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final type = data['type'] as String? ?? 'recycle_general';
+        final name = data['name'] ?? 'ΚΑΔΟΣ';
+
+        BitmapDescriptor icon;
+        String label;
+
+        switch (type) {
+          case 'recycle_general':
+            icon = _blueIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Γενική Ανακύκλωση';
+            break;
+          case 'recycle_paper':
+            icon = _yellowIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Ανακύκλωση Χαρτιού';
+            break;
+          case 'recycle_electronics':
+            icon = _greyIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Ηλεκτρικές Συσκευές';
+            break;
+          case 'food':
+            icon = _brownIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Οργανικά';
+            break;
+          case 'trash':
+            icon = _greenIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Σκουπίδια';
+            break;
+          default:
+            icon = _blueIcon ?? BitmapDescriptor.defaultMarker;
+            label = 'Ανακύκλωση';
+        }
+
+        newMarkers.add(
+          Marker(
+            markerId: MarkerId(doc.id),
+            position: LatLng(
+              (data['lat'] as num).toDouble(), 
+              (data['lng'] as num).toDouble()
+            ),
+            icon: icon,
+            infoWindow: InfoWindow(title: name, snippet: label),
+            onTap: () => _showBinOptions(doc.id, name, label),
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() => _markers = newMarkers);
+      }
+    });
+  }
+
+  // =========================
+  // ADD BIN DIALOG
+  // =========================
+  void _showAddBinDialog(LatLng position) {
+    String selectedType = 'recycle_general'; 
+    // ✅ Removed nameController
+
+    showDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                   Icon(type == 'recycle' ? Icons.recycling : Icons.delete, 
-                        size: 30, color: type == 'recycle' ? Colors.blue : Colors.orange),
-                  
-                  const SizedBox(width: 10),
-                  Text(
-                    name,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                type == 'recycle' ? 'Κάδος Ανακύκλωσης' : 'Κάδος Σκουπιδιών',
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _confirmDelete(docId);
-                  },
-                  icon: const Icon(Icons.delete, color: Colors.white),
-                  label: const Text('Διαγραφή Κάδου', style: TextStyle(color: Colors.white, fontSize: 16)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            
+            Widget buildTypeBtn(String value, String label, Color activeColor) {
+              final bool isSelected = selectedType == value;
+              return ElevatedButton(
+                onPressed: () {
+                  setDialogState(() {
+                    selectedType = value; 
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSelected ? activeColor : Colors.grey[300],
+                  foregroundColor: isSelected ? Colors.white : Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                child: Text(label),
+              );
+            }
+
+            return AlertDialog(
+              title: const Text('Προσθήκη Κάδου'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ✅ Removed TextField for name
+                    const Text('Επιλέξτε Τύπο:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        buildTypeBtn('recycle_general', 'Γενική', Colors.blue),
+                        buildTypeBtn('recycle_paper', 'Χαρτί', Colors.orange),
+                        buildTypeBtn('recycle_electronics', 'Ηλεκτρικές', Colors.grey[700]!),
+                        buildTypeBtn('food', 'Οργανικά', Colors.brown),
+                        buildTypeBtn('trash', 'Σκουπίδια', Colors.green),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Ακύρωση'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // ✅ Automatically passing 'ΚΑΔΟΣ' instead of controller text
+                    _saveBin(position, selectedType);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Προσθήκη'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  void _confirmDelete(String markerId) {
-    showDialog(
+  // =========================
+  // SAVE BIN
+  // =========================
+  Future<void> _saveBin(LatLng pos, String type) async {
+    await FirebaseFirestore.instance.collection('bins').add({
+      'lat': pos.latitude,
+      'lng': pos.longitude,
+      'type': type,
+      'name': 'ΚΑΔΟΣ', // ✅ Hardcoded name
+      'creatorId': currentUserId,
+      'added_at': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // =========================
+  // BIN OPTIONS
+  // =========================
+  void _showBinOptions(String id, String name, String typeLabel) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Διαγραφή Σημείου'),
-        content: const Text('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον κάδο;'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Όχι')),
-          TextButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance.collection('bins').doc(markerId).delete();
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ο κάδος διαγράφηκε!'), backgroundColor: Colors.red),
-                );
-              }
-            },
-            child: const Text('Ναι, διαγραφή', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(name,
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text("Τύπος: $typeLabel"),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection('bins')
+                      .doc(id)
+                      .delete();
+                  if (mounted) Navigator.pop(context);
+                },
+                icon: const Icon(Icons.delete, color: Colors.white),
+                label: const Text('Διαγραφή Κάδου', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // =========================
+  // UI
+  // =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           GoogleMap(
-            mapType: MapType.normal,
             initialCameraPosition: _initialPosition,
             markers: _markers,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
-            zoomControlsEnabled: true,
-            padding: const EdgeInsets.only(bottom: 80), 
-            onLongPress: (LatLng pos) => _showAddBinDialog(pos),
+            zoomControlsEnabled: false,
+            onLongPress: _showAddBinDialog,
+            padding: const EdgeInsets.only(bottom: 80),
           ),
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            // Περνάμε το currentUserId στο Navbar!
-            child: MainNavBar(currentIndex: 2, currentUserId: currentUserId), 
+            child: MainNavBar(
+              currentIndex: 2,
+              currentUserId: currentUserId,
+            ),
           ),
         ],
       ),
