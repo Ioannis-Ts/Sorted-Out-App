@@ -112,7 +112,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const double staticHeaderHeight = 100.0;
+    const double staticHeaderHeight = 130.0;
 
     return Scaffold(
       body: Stack(

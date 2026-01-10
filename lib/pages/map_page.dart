@@ -109,7 +109,7 @@ class _MapPageState extends State<MapPage> {
   final int generation = ++_iconGeneration;
 
   final double dpr = MediaQuery.of(context).devicePixelRatio;
-  double logicalSize = (zoom * 2.2).clamp(16.0, 90.0);
+  double logicalSize = (zoom * 2.2/22).clamp(10.0, 90.0);
   final int finalSize = (logicalSize * dpr).toInt();
 
   try {
