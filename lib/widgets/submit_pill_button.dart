@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart'; // 1. Add this import
 import '../theme/app_variables.dart';
 
 class SubmitPillButton extends StatelessWidget {
@@ -37,7 +38,18 @@ class SubmitPillButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
+          // 2. Wrap the onTap logic to play sound first
+          onTap: enabled
+              ? () async {
+                  // Play the ping sound
+                  final player = AudioPlayer();
+                  // Ensure your file is at assets/sounds/ping.mp3
+                  await player.play(AssetSource('sounds/ping.mp3'));
+                  
+                  // Run the actual button logic
+                  onTap!(); 
+                }
+              : null,
           child: SizedBox(
             width: width,
             height: height,

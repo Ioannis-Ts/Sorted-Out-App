@@ -42,6 +42,8 @@ dependencies:
   http: ^1.2.0
   geolocator: ^14.0.2
   geolocator_web: ^4.1.2
+  audioplayers: ^6.5.1
+  vibration: ^3.1.5
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +65,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/sounds/
 
   fonts:
     - family: IstokWeb
