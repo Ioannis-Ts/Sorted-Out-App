@@ -25,8 +25,8 @@ class HomePage extends StatelessWidget {
     super.key,
     required this.userId,
     this.pointsGoal = 250,
-    this.yearA = 2024,
-    this.yearB = 2025,
+    this.yearA = 2025,
+    this.yearB = 2026,
   });
 
   @override
@@ -34,11 +34,11 @@ class HomePage extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final double treeSize = screenHeight * 0.27;
+    final double treeSize = screenHeight * 0.2;
     final double cloudWidth = screenWidth * 0.80;
-    final double cloudHeight = screenHeight * 0.055;
+    final double cloudHeight = screenHeight * 0.045;
     final double qrSize = screenHeight * 0.09;
-    final double navBarHeight = 90.0;
+    final double navBarHeight = 70.0;
 
     return Scaffold(
       body: Stack(
@@ -95,7 +95,7 @@ class HomePage extends StatelessWidget {
                             '?',
                             style: AppTexts.generalTitle.copyWith(
                               fontSize: 22,
-                              color: Colors.white,
+                              color: Colors.black,
                             ),
                           ),
                         ),

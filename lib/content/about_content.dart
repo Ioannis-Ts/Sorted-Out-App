@@ -4,7 +4,7 @@ class AboutContent {
       'title': 'Grow your tree 🌱',
       'body':
           'Tap the tree to log what you recycled and earn points while helping the planet. '
-          'There is a shared community goal shown at the top of the home screen — every action counts! '
+          'There is a shared community goal shown at the top of the home screen. Every action counts! '
           'As you collect points, your tree grows. On the 1st of every month, a brand new tree appears, '
           'so the journey never stops.',
     },
@@ -18,13 +18,13 @@ class AboutContent {
       'title': 'Ask the AI 🤖',
       'body':
           'Have questions about recycling, sustainability, or the app itself? '
-          'The AI Assistant is here to help — just ask!',
+          'The AI Assistant is here to help. Just ask!',
     },
     {
       'title': 'Find nearby bins 🗺️',
       'body':
           'Use the map to discover recycling bins around you. '
-          'Whether you’re at home or on the go, Sorted Out helps you recycle responsibly.',
+          'Whether you’re at home or on the go, Sorted Out helps you recycle responsibly. Don’t forget to add any new bins on the map!',
     },
     {
       'title': 'Join or create events 🌍',

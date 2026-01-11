@@ -104,6 +104,44 @@ class _CreateEventPageState extends State<CreateEventPage> {
     if (mounted) Navigator.pop(context, true);
   }
 
+  Future<void> _deleteEvent() async {
+    if (!isEdit) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Event'),
+        content: const Text(
+          'Are you sure you want to permanently delete this event?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await FirebaseFirestore.instance
+        .collection('Events')
+        .doc(widget.eventId)
+        .delete();
+
+    if (!mounted) return;
+
+    // Pop CreateEventPage
+    Navigator.of(context).pop(); // closes EventDetailsPage
+    Navigator.of(context).pop(); // closes EventDetailsPage
+  }
+
   Future<void> _pickImage(int index) async {
     final controller = TextEditingController();
     final url = await showDialog<String>(
@@ -318,6 +356,28 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         ),
 
                         const SizedBox(height: 40),
+                        if (isEdit) ...[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _deleteEvent,
+                              icon: const Icon(Icons.delete, color: Colors.white),
+                              label: const Text(
+                                'Delete Event',
+                                style: TextStyle(color: Colors.white, fontSize: 16),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
                       ],
                     ),
                   ),
