@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
 
@@ -39,6 +40,53 @@ class HomePage extends StatelessWidget {
     final double cloudHeight = screenHeight * 0.045;
     final double qrSize = screenHeight * 0.09;
     final double navBarHeight = 70.0;
+
+    void showEncouragement({required int before, required int after}) {
+      const int goal = 250;
+
+      const String firstMsg = "🎉 First points! Amazing start — keep going!";
+
+      // ✅ NEW: 3 messages for 250+ (reached or surpassed)
+      const List<String> impactMsgs = [
+        "🌍 Incredible! You’ve reached 250+ points — your impact is real. Keep leading by example!",
+        "🌳 250+ points! That’s a huge positive impact — thank you for making a difference!",
+        "✨ You’re past 250 points! That’s commitment. Your actions add up — keep it going!",
+      ];
+
+      const List<String> keepGoingMsgs = [
+        "🔥 Nice! Keep going!",
+        "💪 Great work — one step at a time!",
+        "✨ Awesome progress — don’t stop!",
+        "🚀 Let’s go! Every recycle counts!",
+        "🌍 You’re making an impact — keep it up!",
+      ];
+
+      String msg;
+
+      if (before == 0 && after > 0) {
+        msg = firstMsg;
+      } else if (after >= goal) {
+        msg = impactMsgs[Random().nextInt(impactMsgs.length)];
+      } else {
+        msg = keepGoingMsgs[Random().nextInt(keepGoingMsgs.length)];
+      }
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          content: Text(
+            msg,
+            style: AppTexts.generalBody.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Stack(
@@ -142,7 +190,9 @@ class HomePage extends StatelessWidget {
                         stream: StatsStore.pointsStream(yearB),
                         builder: (context, snapB) {
                           final pointsB = snapB.data ?? 0;
-                          final maxPoints = (pointsA > pointsB) ? pointsA : pointsB;
+                          final maxPoints = (pointsA > pointsB)
+                              ? pointsA
+                              : pointsB;
                           return Column(
                             children: [
                               PointsCollectedBar(
@@ -173,12 +223,21 @@ class HomePage extends StatelessWidget {
                       goal: pointsGoal,
                       size: treeSize,
                       ringWidth: treeSize * 0.05,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => RecyclePointsPage(userId: userId),
-                          ),
-                        );
+                      onTap: () async {
+                        final res = await Navigator.of(context)
+                            .push<PointsSubmitResult>(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    RecyclePointsPage(userId: userId),
+                              ),
+                            );
+
+                        if (res != null) {
+                          showEncouragement(
+                            before: res.before,
+                            after: res.after,
+                          );
+                        }
                       },
                     ),
                   ),
@@ -245,8 +304,6 @@ class HomePage extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: MainNavBar(currentIndex: 1, currentUserId: userId),
-            // If your MainNavBar does NOT have currentUserId, change to:
-            // child: MainNavBar(currentIndex: 1),
           ),
         ],
       ),
