@@ -92,7 +92,7 @@ class _BugReportSheetState extends State<BugReportSheet> {
             controller: _controller,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Περιέγραψε τι συνέβη…',
+              hintText: 'Περίγραψε τι συνέβη…',
               filled: true,
               fillColor: Colors.white, // ✅ Λευκό φόντο στο πεδίο
               border: OutlineInputBorder(
