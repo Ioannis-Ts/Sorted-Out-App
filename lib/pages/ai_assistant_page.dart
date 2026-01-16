@@ -44,7 +44,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
         user: _aiUser,
         createdAt: DateTime.now(),
         text:
-            "Γειά! Είμαι ο ΑΙ βοηθός σου 🤖\nΡώτα με οτιδήποτε σχετικά με την ανακύκλωση.",
+            "Γειά! Είμαι ο ΑΙ βοηθός σου 🤖\nΡώτα με ό,τι θες σχετικά με την ανακύκλωση.",
       ),
     );
 
@@ -155,10 +155,6 @@ CORE RULES:
   Widget build(BuildContext context) {
     final double navBarHeight = 90.0;
 
-    final botBubble = Colors.white;
-    final userBubble = AppColors.main.withValues(alpha: 0.1);
-    final inputFill = Colors.white.withValues(alpha: 0.1);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -195,103 +191,93 @@ CORE RULES:
                       messageListOptions: const MessageListOptions(
                         showDateSeparator: false,
                       ),
-                      inputOptions: InputOptions(
-                        inputTextStyle: TextStyle(
-                          color: AppColors.textMain,
-                          fontSize: 14,
-                        ),
-                        sendButtonBuilder: (onSend) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: InkWell(
-                              onTap: onSend,
-                              child: Icon(
-                                Icons.send_rounded,
-                                size: 20,
-                                color: AppColors.textMain,
-                              ),
+                      messageOptions: MessageOptions(
+                        showOtherUsersAvatar: false, // <--- ΑΥΤΟ ΚΡΥΒΕΙ ΤΟ "A"
+                        showCurrentUserAvatar: false, // <--- ΑΥΤΟ ΚΡΥΒΕΙ ΤΟ ΔΙΚΟ ΣΟΥ AVATAR
+                        textColor: AppColors.textMain,
+                        currentUserTextColor: AppColors.textMain,
+                        // Φτιάχνουμε τα συννεφάκια να φαίνονται ωραία και χωρίς avatars
+                        messageDecorationBuilder: (ChatMessage msg,
+                            ChatMessage? previous, ChatMessage? next) {
+                          final bool isMe = msg.user.id == _currentUser.id;
+                          return BoxDecoration(
+                            // Χρώματα: Κίτρινο για το AI, Αχνό μπλε/γκρι για τον χρήστη
+                            color: isMe
+                                ? AppColors.main.withOpacity(0.1)
+                                : AppColors.lightGrey,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(isMe ? 18 : 6),
+                              bottomRight: Radius.circular(isMe ? 6 : 18),
                             ),
                           );
                         },
+                      ),
+                      inputOptions: InputOptions(
+                        inputTextStyle: TextStyle(
+                          color: AppColors.textMain,
+                          fontSize: 16, // Λίγο μεγαλύτερα γράμματα για ευκολία
+                        ),
+                        inputToolbarPadding: const EdgeInsets.symmetric(vertical: 10), // Αέρας πάνω-κάτω
+                        inputToolbarStyle: const BoxDecoration(
+                          color: Colors.transparent, // Διαφανές φόντο πίσω από την μπάρα
+                        ),
+                        // --- ΣΧΕΔΙΑΣΜΟΣ ΚΟΥΜΠΙΟΥ ΑΠΟΣΤΟΛΗΣ ---
+                        sendButtonBuilder: (onSend) {
+                          return Container(
+                            margin: const EdgeInsets.only(left: 10, right: 0),
+                            decoration: BoxDecoration(
+                              color: AppColors.main, // Χρώμα κουμπιού (το βασικό της εφαρμογής)
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.send_rounded, size: 22, color: Colors.white),
+                              onPressed: onSend,
+                            ),
+                          );
+                        },
+                        // --- ΣΧΕΔΙΑΣΜΟΣ ΠΕΔΙΟΥ ΚΕΙΜΕΝΟΥ ---
                         inputDecoration: InputDecoration(
-                          hintText: "Ask about recycling…",
+                          hintText: "Ρώτησε για την ανακύκλωση...",
                           hintStyle: TextStyle(
-                            color: AppColors.textMuted.withOpacity(0.8),
+                            color: AppColors.textMuted,
                             fontSize: 14,
                           ),
                           filled: true,
-                          fillColor: inputFill,
+                          fillColor: Colors.white, // Λευκό φόντο για να φαίνεται καθαρά
+                          isDense: true,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                            horizontal: 20,
+                            vertical: 12,
                           ),
-                          prefixIcon: Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Icon(
-                              Icons.attach_file,
-                              size: 20,
-                              color: AppColors.textMain.withOpacity(0.75),
-                            ),
-                          ),
-                          prefixIconConstraints: const BoxConstraints(
-                            minWidth: 38,
-                            minHeight: 38,
-                          ),
+                          // Αφαιρέθηκε το prefixIcon (ο συνδετήρας) από εδώ
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(22),
-                            borderSide: BorderSide(
-                              color: AppColors.outline.withOpacity(0.35),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(30), // Οβάλ σχήμα
+                            borderSide: BorderSide.none, // Χωρίς περίγραμμα (πιο καθαρό)
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(22),
-                            borderSide: BorderSide(
-                              color: AppColors.outline.withOpacity(0.35),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(22),
-                            borderSide: BorderSide(
-                              color: AppColors.outline.withOpacity(0.65),
-                              width: 1.2,
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: const BorderSide(
+                              color: AppColors.main, // Λεπτό περίγραμμα όταν γράφεις
+                              width: 1.5,
                             ),
                           ),
                         ),
-                        inputToolbarStyle: const BoxDecoration(
-                          color: Colors.transparent,
-                        ),
-                      ),
-                      messageOptions: MessageOptions(
-                        showOtherUsersAvatar: false,
-                        showCurrentUserAvatar: false,
-                        textColor: AppColors.textMain,
-                        currentUserTextColor: AppColors.textMain,
-                        messageDecorationBuilder:
-                            (
-                            ChatMessage msg,
-                            ChatMessage? previous,
-                            ChatMessage? next,
-                            ) {
-                              final bool isMe = msg.user.id == _currentUser.id;
-                              return BoxDecoration(
-                                color: isMe ? userBubble : botBubble,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(18),
-                                  topRight: const Radius.circular(18),
-                                  bottomLeft: Radius.circular(isMe ? 18 : 6),
-                                  bottomRight: Radius.circular(isMe ? 6 : 18),
-                                ),
-                                border: Border.all(
-                                  color: AppColors.outline.withOpacity(0.25),
-                                  width: 1,
-                                ),
-                              );
-                            },
                       ),
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
