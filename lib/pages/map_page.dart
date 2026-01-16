@@ -7,8 +7,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/main_nav_bar.dart';
-import 'package:geolocator/geolocator.dart';
-
+import 'package:geolocator/geolocator.dart'; // Βεβαιώσου ότι έχεις αυτό το πακέτο
+import '../theme/app_variables.dart';
 
 Future<void> _ensureLocationPermission() async {
   LocationPermission permission = await Geolocator.checkPermission();
@@ -18,10 +18,10 @@ Future<void> _ensureLocationPermission() async {
   }
 
   if (permission == LocationPermission.deniedForever) {
-    throw Exception('Location permissions are permanently denied');
+    // Μπορείς να δείξεις ένα dialog εδώ
+    return;
   }
 }
-
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -31,14 +31,17 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  // 1. Controller για να κουνάμε τον χάρτη
+  GoogleMapController? _mapController;
+
   static const CameraPosition _initialPosition = CameraPosition(
-    target: LatLng(37.9838, 23.7275),
+    target: LatLng(37.9838, 23.7275), // Athens center default
     zoom: 14.0,
   );
 
   // --- STATE VARIABLES ---
   Set<Marker> _markers = {};
-  List<DocumentSnapshot> _binDocsCache = []; // Stores firestore data
+  List<DocumentSnapshot> _binDocsCache = [];
   StreamSubscription? _firestoreSubscription;
   int _iconGeneration = 0;
 
@@ -52,15 +55,13 @@ class _MapPageState extends State<MapPage> {
   // Zoom & Loading State
   double _currentZoom = 14.0;
   bool _iconsLoaded = false;
-  bool _isInitLoadDone = false; // Ensures we only load initial icons once
+  bool _isInitLoadDone = false;
 
-  final String currentUserId =
-      FirebaseAuth.instance.currentUser?.uid ?? '';
+  final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
     super.initState();
-    // 1. Start listening to Firestore immediately
     _subscribeToBins();
     _ensureLocationPermission();
   }
@@ -68,7 +69,6 @@ class _MapPageState extends State<MapPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 2. Load initial icons once we have access to Context (for screen density)
     if (!_isInitLoadDone) {
       _isInitLoadDone = true;
       _updateIconsForZoom(_currentZoom);
@@ -78,104 +78,104 @@ class _MapPageState extends State<MapPage> {
   @override
   void dispose() {
     _firestoreSubscription?.cancel();
+    _mapController?.dispose(); // Καθαρισμός controller
     super.dispose();
   }
 
-  // ==========================================
-  // 1. FIRESTORE SUBSCRIPTION
-  // ==========================================
+  // --- 2. ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΜΕΤΑΒΑΣΗ ΣΤΗΝ ΤΟΠΟΘΕΣΙΑ ---
+  Future<void> _goToUserLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 17.0, // Κοντινό ζουμ
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error getting location: $e");
+    }
+  }
+
+  // ... (ΟΙ ΥΠΟΛΟΙΠΕΣ ΣΥΝΑΡΤΗΣΕΙΣ ΣΟΥ ΠΑΡΑΜΕΝΟΥΝ ΙΔΙΕΣ: _subscribeToBins, _updateIconsForZoom κλπ) ...
+  // ΓΙΑ ΣΥΝΤΟΜΙΑ ΔΕΝ ΤΙΣ ΞΑΝΑΓΡΑΦΩ ΟΛΕΣ, ΕΙΝΑΙ ΙΔΙΕΣ ΜΕ ΤΟΝ ΚΩΔΙΚΑ ΣΟΥ
+  // ΑΝΤΙΓΡΑΨΕ ΤΙΣ ΑΠΟ ΤΟΝ ΠΑΛΙΟ ΣΟΥ ΚΩΔΙΚΑ ΑΝ ΛΕΙΠΟΥΝ
+
   void _subscribeToBins() {
     _firestoreSubscription = FirebaseFirestore.instance
         .collection('bins')
         .snapshots()
         .listen((snapshot) {
-      // Update our cache of data
       _binDocsCache = snapshot.docs;
-      
-      // If icons are ready, draw the markers immediately
       if (_iconsLoaded) {
         _renderMarkers();
       }
     });
   }
 
-  // ==========================================
-  // 2. ICON GENERATION (DYNAMIC SIZE)
-  // ==========================================
   Future<void> _updateIconsForZoom(double zoom) async {
-  if (!mounted) return;
+    if (!mounted) return;
+    final int generation = ++_iconGeneration;
+    final double dpr = MediaQuery.of(context).devicePixelRatio;
+    double logicalSize = (zoom * 2.2 / 22).clamp(10.0, 90.0);
+    final int finalSize = (logicalSize * dpr).toInt();
 
-  // 🔒 Create a unique generation ID
-  final int generation = ++_iconGeneration;
+    try {
+      final blue = await _createMarkerIcon('blue', size: finalSize);
+      final yellow = await _createMarkerIcon('yellow', size: finalSize);
+      final grey = await _createMarkerIcon('grey', size: finalSize);
+      final brown = await _createMarkerIcon('brown', size: finalSize);
+      final green = await _createMarkerIcon('green', size: finalSize);
 
-  final double dpr = MediaQuery.of(context).devicePixelRatio;
-  double logicalSize = (zoom * 2.2/22).clamp(10.0, 90.0);
-  final int finalSize = (logicalSize * dpr).toInt();
+      if (!mounted || generation != _iconGeneration) return;
 
-  try {
-    final blue   = await _createMarkerIcon('blue', size: finalSize);
-    final yellow = await _createMarkerIcon('yellow', size: finalSize);
-    final grey   = await _createMarkerIcon('grey', size: finalSize);
-    final brown  = await _createMarkerIcon('brown', size: finalSize);
-    final green  = await _createMarkerIcon('green', size: finalSize);
+      setState(() {
+        _blueIcon = blue;
+        _yellowIcon = yellow;
+        _greyIcon = grey;
+        _brownIcon = brown;
+        _greenIcon = green;
+        _iconsLoaded = true;
+      });
 
-    // ❗ Ignore outdated async completions
-    if (!mounted || generation != _iconGeneration) return;
-
-    setState(() {
-      _blueIcon = blue;
-      _yellowIcon = yellow;
-      _greyIcon = grey;
-      _brownIcon = brown;
-      _greenIcon = green;
-      _iconsLoaded = true;
-    });
-
-    _renderMarkers();
-  } catch (e) {
-    debugPrint('Icon resize error: $e');
+      _renderMarkers();
+    } catch (e) {
+      debugPrint('Icon resize error: $e');
+    }
   }
-}
-
 
   Future<BitmapDescriptor> _createMarkerIcon(String color, {required int size}) async {
     final assetPath = 'assets/images/$color.png';
     try {
       final ByteData data = await rootBundle.load(assetPath);
       final Uint8List bytes = data.buffer.asUint8List();
-
       final ui.Codec codec = await ui.instantiateImageCodec(
         bytes,
         targetWidth: size,
         targetHeight: size,
       );
-
       final ui.FrameInfo frameInfo = await codec.getNextFrame();
-      final ByteData? resized = await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
-
+      final ByteData? resized =
+          await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
       if (resized == null) return BitmapDescriptor.defaultMarker;
-      
       return BitmapDescriptor.bytes(resized.buffer.asUint8List());
     } catch (e) {
       return BitmapDescriptor.defaultMarker;
     }
   }
 
-  // ==========================================
-  // 3. RENDER MARKERS
-  // ==========================================
   void _renderMarkers() {
     if (!_iconsLoaded) return;
-
     final Set<Marker> newMarkers = {};
-
     for (final doc in _binDocsCache) {
       final data = doc.data() as Map<String, dynamic>;
       final type = data['type'] as String? ?? 'recycle_general';
-      
-      // HARDCODED NAME
       const name = 'ΚΑΔΟΣ';
-
       BitmapDescriptor icon;
       String label;
 
@@ -218,7 +218,6 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }
-
     if (mounted) {
       setState(() {
         _markers = newMarkers;
@@ -226,26 +225,19 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  // ==========================================
-  // 4. CAMERA LOGIC
-  // ==========================================
   void _onCameraMove(CameraPosition position) {
     _currentZoom = position.zoom;
   }
 
   void _onCameraIdle() {
-    // When the user stops moving the map, regenerate icons for the new zoom level
     if (_iconsLoaded) {
       _updateIconsForZoom(_currentZoom);
     }
   }
-
-  // ==========================================
-  // 5. DIALOGS & UI (Unchanged logic)
-  // ==========================================
+  
+  // (DIALOGS: _showAddBinDialog, _saveBin, _showBinOptions - ΙΔΙΑ ΜΕ ΠΡΙΝ)
   void _showAddBinDialog(LatLng position) {
     String selectedType = 'recycle_general';
-
     showDialog(
       context: context,
       builder: (context) {
@@ -260,7 +252,8 @@ class _MapPageState extends State<MapPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isSelected ? activeColor : Colors.grey[300],
                   foregroundColor: isSelected ? Colors.white : Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 child: Text(label),
               );
@@ -272,7 +265,8 @@ class _MapPageState extends State<MapPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Επιλέξτε Τύπο:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Επιλέξτε Τύπο:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
@@ -281,7 +275,8 @@ class _MapPageState extends State<MapPage> {
                       children: [
                         buildTypeBtn('recycle_general', 'Γενική', Colors.blue),
                         buildTypeBtn('recycle_paper', 'Χαρτί', Colors.orange),
-                        buildTypeBtn('recycle_electronics', 'Ηλεκτρικές', Colors.grey[700]!),
+                        buildTypeBtn(
+                            'recycle_electronics', 'Ηλεκτρικές', Colors.grey[700]!),
                         buildTypeBtn('food', 'Οργανικά', Colors.brown),
                         buildTypeBtn('trash', 'Σκουπίδια', Colors.green),
                       ],
@@ -329,7 +324,9 @@ class _MapPageState extends State<MapPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(name,
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text("Τύπος: $typeLabel"),
             const SizedBox(height: 20),
@@ -337,11 +334,15 @@ class _MapPageState extends State<MapPage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  await FirebaseFirestore.instance.collection('bins').doc(id).delete();
+                  await FirebaseFirestore.instance
+                      .collection('bins')
+                      .doc(id)
+                      .delete();
                   if (mounted) Navigator.pop(context);
                 },
                 icon: const Icon(Icons.delete, color: Colors.white),
-                label: const Text('Διαγραφή Κάδου', style: TextStyle(color: Colors.white)),
+                label: const Text('Διαγραφή Κάδου',
+                    style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               ),
             ),
@@ -357,17 +358,36 @@ class _MapPageState extends State<MapPage> {
       body: Stack(
         children: [
           GoogleMap(
+            // 3. Σύνδεση με τον Controller
+            onMapCreated: (controller) {
+              _mapController = controller;
+            },
             initialCameraPosition: _initialPosition,
             markers: _markers,
             myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            myLocationButtonEnabled: false, // Το κλείνουμε για να βάλουμε το δικό μας
             zoomControlsEnabled: false,
-            // Track Camera
             onCameraMove: _onCameraMove,
             onCameraIdle: _onCameraIdle,
             onLongPress: _showAddBinDialog,
-            padding: const EdgeInsets.only(bottom: 80),
+            // Δεν χρειάζεται πλέον τόσο μεγάλο padding γιατί βάλαμε δικό μας κουμπί
+            padding: const EdgeInsets.only(bottom: 0), 
           ),
+
+          // 4. CUSTOM BUTTON TOΠΟΘΕΣΙΑΣ
+          Positioned(
+            right: 20, // Δεξιά μεριά
+            bottom: 110, // Πάνω από το Nav Bar (που είναι περίπου 80-90)
+            child: FloatingActionButton(
+              heroTag: "my_location_btn",
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue,
+              elevation: 4,
+              onPressed: _goToUserLocation, // Καλεί τη συνάρτηση που φτιάξαμε
+              child: const Icon(Icons.my_location, size: 28),
+            ),
+          ),
+
           Positioned(
             left: 0,
             right: 0,
