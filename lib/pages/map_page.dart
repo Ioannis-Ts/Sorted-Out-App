@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/main_nav_bar.dart';
 import 'package:geolocator/geolocator.dart'; // Βεβαιώσου ότι έχεις αυτό το πακέτο
-import '../theme/app_variables.dart';
 
 Future<void> _ensureLocationPermission() async {
   LocationPermission permission = await Geolocator.checkPermission();

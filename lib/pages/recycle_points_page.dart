@@ -31,7 +31,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
   final Map<String, int> _itemCounts = {};
 
-  // ✅ Emoji map (matches your labels)
   static const Map<String, String> _emoji = {
     'Plastic': '🥤',
     'Paper': '📄',
@@ -41,6 +40,49 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
     'Electronics': '📱',
     'Food': '🍎',
   };
+
+  // --- 1. ΠΡΟΣΘΗΚΗ: ΒΟΗΘΗΤΙΚΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΟΜΟΡΦΑ ΜΗΝΥΜΑΤΑ ---
+  void _showError(String message, {Color color = Colors.redAccent}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent, // Αόρατο background
+        elevation: 0,
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.only(
+          bottom: 20, // Απόσταση από κάτω
+          left: 20,
+          right: 20,
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            color: color, // Το χρώμα (π.χ. πορτοκαλί)
+            borderRadius: BorderRadius.circular(50), // Οβάλ σχήμα
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTexts.generalBody.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _addPoints(String label, int delta) {
     setState(() {
@@ -56,11 +98,9 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
     });
   }
 
-  // ✅ Summary like: "🥤 x2   📄 x1   🔋 x3"
   String _getSummaryText() {
     if (_itemCounts.isEmpty) return 'No items selected yet.';
 
-    // Keep a stable order (so it doesn't jump around)
     const order = [
       'Plastic',
       'Paper',
@@ -84,12 +124,16 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
   Future<void> _submit() async {
     if (_submitting) return;
-    if (_sessionPoints <= 0) return;
+
+    // --- 2. ΕΛΕΓΧΟΣ: ΑΝ ΔΕΝ ΕΧΕΙ ΕΠΙΛΕΞΕΙ ΤΙΠΟΤΑ ---
+    if (_sessionPoints <= 0) {
+      _showError("Please select at least one item!", color: Colors.orange);
+      return;
+    }
 
     setState(() => _submitting = true);
 
     try {
-      // ✅ Read BEFORE points
       final profileRef = FirebaseFirestore.instance
           .collection('Profiles')
           .doc(widget.userId);
@@ -98,25 +142,25 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
       final beforePoints =
           (beforeSnap.data()?['totalpoints'] as num?)?.toInt() ?? 0;
 
-      // ✅ Keep your existing logic: add the points
       await ProfilePointsStore.addPoints(widget.userId, _sessionPoints);
 
-      // ✅ Read AFTER points
+      // Ενημέρωση γενικών στατιστικών
+      await FirebaseFirestore.instance.collection('Stats').doc('2026').set({
+        'pointscollected': FieldValue.increment(_sessionPoints),
+      }, SetOptions(merge: true));
+
       final afterSnap = await profileRef.get();
       final afterPoints =
           (afterSnap.data()?['totalpoints'] as num?)?.toInt() ?? beforePoints;
 
       if (!mounted) return;
 
-      // ✅ Return result to Home (for the pop-up)
-      Navigator.of(
-        context,
-      ).pop(PointsSubmitResult(before: beforePoints, after: afterPoints));
+      Navigator.of(context).pop(
+          PointsSubmitResult(before: beforePoints, after: afterPoints));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to submit points: $e')));
+      // Χρησιμοποιούμε το νέο στυλ και για τα λάθη του συστήματος
+      _showError('Failed to submit: $e');
       setState(() => _submitting = false);
     }
   }
@@ -153,17 +197,14 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // ✅ ΤΡΟΠΟΠΟΙΗΜΕΝΟ HEADER
-                  // 1. Κουμπί Back αριστερά
-                  // 2. Τίτλος
-                  // 3. Αφαιρέθηκε το Reset Button από δεξιά
+                  // Header
                   Row(
                     children: [
                       IconButton(
                         icon: const Icon(
                           Icons.arrow_back,
                           size: 28,
-                          color: AppColors.textMain, // Ή Colors.black αν προτιμάς
+                          color: AppColors.textMain,
                         ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
@@ -178,10 +219,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                     ],
                   ),
 
-                  // ✅ ΑΦΑΙΡΕΘΗΚΕ: Center(child: PointsPill(points: _sessionPoints)),
-                  // για να φύγει η μεγάλη άσπρη μπάρα από πάνω.
-
-                  const SizedBox(height: 24), // Λίγο έξτρα κενό τώρα που έφυγε η μπάρα
+                  const SizedBox(height: 24),
 
                   // Buttons grid
                   Row(
@@ -249,7 +287,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
                   const SizedBox(height: 26),
 
-                  // Summary row (emoji x count)
+                  // Summary row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -266,7 +304,6 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Εδώ διατηρούμε το PointsPill και το Reset κουμπί
                       PointsPill(points: _sessionPoints),
                       const SizedBox(width: 8),
                       ResetIconButton(
