@@ -19,6 +19,130 @@ class _SignupPageState extends State<SignupPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
+  // --- ΒΟΗΘΗΤΙΚΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ERROR SNACKBARS (ΙΔΙΑ ΜΕ LOGIN) ---
+  void _showError(String message, {Color color = Colors.redAccent}) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent, // Αόρατο background
+        elevation: 0,
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.only(
+          bottom: 20, // Απόσταση από κάτω
+          left: 20,
+          right: 20,
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            color: color, // Χρώμα μηνύματος
+            borderRadius: BorderRadius.circular(50), // Οβάλ σχήμα
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTexts.generalBody.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSignup() async {
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // 1. Έλεγχος αν όλα τα πεδία είναι συμπληρωμένα
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      _showError("Please fill in all fields.", color: Colors.orange);
+      return;
+    }
+
+    // 2. Έλεγχος αν ταιριάζουν οι κωδικοί
+    if (password != confirmPassword) {
+      _showError("Passwords do not match!");
+      return;
+    }
+
+    // 3. Έλεγχος για ΚΕΦΑΛΑΙΟ γράμμα
+    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    if (!hasUppercase) {
+      _showError("Password must have at least 6 characters and contain one uppercase letter.");
+      return;
+    }
+
+    // 4. Έλεγχος για μήκος κωδικού
+    if (password.length < 6) {
+      _showError("Password is too weak (min 6 characters).");
+      return;
+    }
+
+    // 5. Διαδικασία Firebase
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('Profiles')
+          .doc(userCredential.user!.uid)
+          .set({
+        'name': username,
+        'email': email,
+        'uid': userCredential.user!.uid,
+        'totalpoints': 0,
+        'lastlogin': Timestamp.now(),
+      });
+
+      if (mounted) {
+        // Επιτυχία: Εμφάνιση πράσινου μηνύματος
+        _showError("Account created successfully!", color: Colors.green);
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = "Something went wrong";
+
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'The account already exists for that email.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is not valid.';
+      } else {
+        message = e.message ?? "An unknown error occurred.";
+      }
+
+      if (mounted) {
+        _showError(message);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError("Error: $e");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,7 +175,6 @@ class _SignupPageState extends State<SignupPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-
                 Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,23 +215,18 @@ class _SignupPageState extends State<SignupPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 30),
-
                   _buildTextField(
                     controller: _usernameController,
                     label: "Username",
                     icon: Icons.person_outline,
                   ),
-
                   const SizedBox(height: 20),
-
                   _buildTextField(
                     controller: _emailController,
                     label: "Email",
                     icon: Icons.email_outlined,
                   ),
-
                   const SizedBox(height: 20),
-
                   _buildPasswordField(
                     controller: _passwordController,
                     label: "Password",
@@ -119,13 +237,12 @@ class _SignupPageState extends State<SignupPage> {
                       });
                     },
                   ),
-
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0, left: 5),
                       child: Text(
-                        "Password must contain one uppercase and one lowercase character.",
+                        "Password must have at least 6 characters and contain one uppercase letter.",
                         style: AppTexts.generalBody.copyWith(
                           fontSize: 11,
                           color: AppColors.grey2,
@@ -133,83 +250,24 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   _buildPasswordField(
                     controller: _confirmPasswordController,
                     label: "Confirm Password",
                     isVisible: _isConfirmPasswordVisible,
                     onVisibilityChanged: () {
                       setState(() {
-                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                        _isConfirmPasswordVisible =
+                            !_isConfirmPasswordVisible;
                       });
                     },
                   ),
-
                   const SizedBox(height: 40),
-
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        if (_passwordController.text !=
-                            _confirmPasswordController.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Passwords do not match!"),
-                            ),
-                          );
-                          return;
-                        }
-
-                        try {
-                          UserCredential userCredential =
-                              await FirebaseAuth.instance
-                                  .createUserWithEmailAndPassword(
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                          );
-
-                          await FirebaseFirestore.instance
-                              .collection('Profiles')
-                              .doc(userCredential.user!.uid)
-                              .set({
-                            'name': _usernameController.text.trim(),
-                            'email': _emailController.text.trim(),
-                            'uid': userCredential.user!.uid,
-                            'totalpoints': 0,
-                            'lastlogin': Timestamp.now(),
-                          });
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text("Account created successfully!"),
-                              ),
-                            );
-                            Navigator.pop(context);
-                          }
-                        } on FirebaseAuthException catch (e) {
-                          String message = "Something went wrong";
-                          if (e.code == 'weak-password') {
-                            message =
-                                'The password provided is too weak.';
-                          } else if (e.code ==
-                              'email-already-in-use') {
-                            message =
-                                'The account already exists for that email.';
-                          }
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(message)),
-                            );
-                          }
-                        }
-                      },
+                      onPressed: _handleSignup,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.main,
                         elevation: 2,
@@ -227,7 +285,6 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 30),
                 ],
               ),
@@ -249,8 +306,8 @@ class _SignupPageState extends State<SignupPage> {
       style: AppTexts.generalBody.copyWith(color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle:
-            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
+        labelStyle: AppTexts.generalBody
+            .copyWith(color: AppColors.maindark, fontSize: 16),
         filled: true,
         fillColor: Colors.white,
         enabledBorder: OutlineInputBorder(
@@ -264,8 +321,7 @@ class _SignupPageState extends State<SignupPage> {
               const BorderSide(color: AppColors.maindark, width: 2),
         ),
         suffixIcon: IconButton(
-          icon: const Icon(Icons.cancel_outlined,
-              color: AppColors.grey),
+          icon: const Icon(Icons.cancel_outlined, color: AppColors.grey),
           onPressed: () {
             controller.clear();
             setState(() {});
@@ -288,8 +344,8 @@ class _SignupPageState extends State<SignupPage> {
       style: AppTexts.generalBody.copyWith(color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle:
-            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
+        labelStyle: AppTexts.generalBody
+            .copyWith(color: AppColors.maindark, fontSize: 16),
         filled: true,
         fillColor: Colors.white,
         enabledBorder: OutlineInputBorder(
@@ -307,16 +363,13 @@ class _SignupPageState extends State<SignupPage> {
           children: [
             IconButton(
               icon: Icon(
-                isVisible
-                    ? Icons.visibility
-                    : Icons.visibility_off,
+                isVisible ? Icons.visibility : Icons.visibility_off,
                 color: AppColors.grey,
               ),
               onPressed: onVisibilityChanged,
             ),
             IconButton(
-              icon: const Icon(Icons.cancel_outlined,
-                  color: AppColors.grey),
+              icon: const Icon(Icons.cancel_outlined, color: AppColors.grey),
               onPressed: () {
                 controller.clear();
                 setState(() {});

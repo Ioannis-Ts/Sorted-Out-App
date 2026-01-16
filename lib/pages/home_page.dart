@@ -46,11 +46,12 @@ class HomePage extends StatelessWidget {
 
       const String firstMsg = "🎉 First points! Amazing start — keep going!";
 
-      // ✅ NEW: 3 messages for 250+ (reached or surpassed)
       const List<String> impactMsgs = [
-        "🌍 Incredible! You’ve reached 250+ points — your impact is real. Keep leading by example!",
-        "🌳 250+ points! That’s a huge positive impact — thank you for making a difference!",
-        "✨ You’re past 250 points! That’s commitment. Your actions add up — keep it going!",
+        "🌍 Incredible! You’ve reached 250+ points!",
+        "🌳 250+ points! Huge positive impact!",
+        "✨ You’re past 250 points! Keep leading!",
+        "🌟 Superstar recycler! Over 250 points!",
+        "💚 The planet thanks you for 250+ points!",
       ];
 
       const List<String> keepGoingMsgs = [
@@ -59,6 +60,8 @@ class HomePage extends StatelessWidget {
         "✨ Awesome progress — don’t stop!",
         "🚀 Let’s go! Every recycle counts!",
         "🌍 You’re making an impact — keep it up!",
+        "♻️ Another item saved from the trash!",
+        "👏 Well done! Adding up nicely!",
       ];
 
       String msg;
@@ -70,18 +73,47 @@ class HomePage extends StatelessWidget {
       } else {
         msg = keepGoingMsgs[Random().nextInt(keepGoingMsgs.length)];
       }
+      print("Before: $before, After: $after. Message Selected: $msg");
 
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      
+      // Υπολογισμός θέσης για την κορυφή
+      // Αφαιρούμε περίπου 130 pixels από το συνολικό ύψος για να κάτσει ψηλά αλλά όχι πάνω στη μπάρα
+      final double bottomMargin = screenHeight - 130;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent, // Διφανές για να φανεί μόνο το κουτί μας
+          elevation: 0, // Σβήνουμε τη μανίσια σκιά
           duration: const Duration(seconds: 3),
-          content: Text(
-            msg,
-            style: AppTexts.generalBody.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              fontSize: 14,
+          // Το περιθώριο αυτό το σπρώχνει τέρμα πάνω
+          margin: EdgeInsets.only(
+            bottom: bottomMargin, 
+            left: 40, 
+            right: 40
+          ),
+          content: Container(
+            decoration: BoxDecoration(
+              color: AppColors.ourYellow, // Το χρώμα που ζήτησες
+              borderRadius: BorderRadius.circular(50), // Οβάλ σχήμα (μεγάλη ακτίνα)
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Text(
+              msg,
+              textAlign: TextAlign.center, // Κεντραρισμένο κείμενο
+              style: AppTexts.generalBody.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black, // Μαύρα γράμματα για να φαίνονται στο κίτρινο
+                fontSize: 14,
+              ),
             ),
           ),
         ),

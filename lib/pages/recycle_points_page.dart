@@ -153,10 +153,21 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Top row: title + reset
+                  // ✅ ΤΡΟΠΟΠΟΙΗΜΕΝΟ HEADER
+                  // 1. Κουμπί Back αριστερά
+                  // 2. Τίτλος
+                  // 3. Αφαιρέθηκε το Reset Button από δεξιά
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          size: 28,
+                          color: AppColors.textMain, // Ή Colors.black αν προτιμάς
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 8),
                       Text(
                         "Recycle Points",
                         style: AppTexts.generalTitle.copyWith(
@@ -164,16 +175,13 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                           color: AppColors.textMain,
                         ),
                       ),
-                      ResetIconButton(onTap: _resetPoints),
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  // ✅ ΑΦΑΙΡΕΘΗΚΕ: Center(child: PointsPill(points: _sessionPoints)),
+                  // για να φύγει η μεγάλη άσπρη μπάρα από πάνω.
 
-                  // Points pill (center)
-                  Center(child: PointsPill(points: _sessionPoints)),
-
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 24), // Λίγο έξτρα κενό τώρα που έφυγε η μπάρα
 
                   // Buttons grid
                   Row(
@@ -258,6 +266,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // Εδώ διατηρούμε το PointsPill και το Reset κουμπί
                       PointsPill(points: _sessionPoints),
                       const SizedBox(width: 8),
                       ResetIconButton(
@@ -268,7 +277,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                     ],
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 40),
 
                   Align(
                     alignment: Alignment.center,

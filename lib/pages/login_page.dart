@@ -17,10 +17,105 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
+  // --- ΒΟΗΘΗΤΙΚΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ERROR SNACKBARS ΣΤΟ ΚΑΤΩ ΜΕΡΟΣ ---
+  void _showError(String message, {Color color = Colors.redAccent}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent, // Αόρατο background
+        elevation: 0,
+        duration: const Duration(seconds: 3),
+        // ✅ ΑΛΛΑΓΗ: Το margin ορίζει πόσο απέχει από το κάτω μέρος και τα πλάγια
+        margin: const EdgeInsets.only(
+          bottom: 20, // 20 pixels από το κάτω μέρος της οθόνης
+          left: 20,
+          right: 20,
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            color: color, // Το χρώμα (κόκκινο/πράσινο/πορτοκαλί)
+            borderRadius: BorderRadius.circular(50), // Οβάλ σχήμα
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: AppTexts.generalBody.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // 1. Έλεγχος κενών πεδίων
+    if (email.isEmpty || password.isEmpty) {
+      _showError("Please fill in both email and password.", color: Colors.orange);
+      return;
+    }
+
+    // 2. Προσπάθεια σύνδεσης
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      await ProfileSessionService.handleLogin(userCredential.user!.uid);
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomePage(
+              userId: userCredential.user!.uid,
+            ),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // 3. Διαχείριση Σφαλμάτων Firebase
+      String message = "Login failed. Please try again.";
+
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        message = 'Incorrect email or password.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Please enter a valid email address.';
+      } else if (e.code == 'user-disabled') {
+        message = 'This user account has been disabled.';
+      } else {
+        message = e.message ?? "An unknown error occurred.";
+      }
+
+      if (mounted) {
+        _showError(message);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError("Error: $e");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9E6),
+      backgroundColor: AppColors.ourYellow,
       body: Column(
         children: [
           // HEADER
@@ -29,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
             width: double.infinity,
             padding: const EdgeInsets.only(left: 25, bottom: 20),
             decoration: const BoxDecoration(
-              color: Color(0xFF95A0FF),
+              color: AppColors.main,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -79,22 +174,23 @@ class _LoginPageState extends State<LoginPage> {
                     // Email
                     TextField(
                       controller: _emailController,
-                      style: AppTexts.generalBody.copyWith(color: Colors.black87),
+                      style:
+                          AppTexts.generalBody.copyWith(color: Colors.black87),
                       decoration: InputDecoration(
                         labelText: "Email",
-                        labelStyle:
-                            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
+                        labelStyle: AppTexts.generalBody.copyWith(
+                            color: AppColors.maindark, fontSize: 16),
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.maindark, width: 1.5),
+                          borderSide: const BorderSide(
+                              color: AppColors.maindark, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.maindark, width: 2),
+                          borderSide: const BorderSide(
+                              color: AppColors.maindark, width: 2),
                         ),
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.cancel_outlined,
@@ -113,22 +209,23 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
-                      style: AppTexts.generalBody.copyWith(color: Colors.black87),
+                      style:
+                          AppTexts.generalBody.copyWith(color: Colors.black87),
                       decoration: InputDecoration(
                         labelText: "Password",
-                        labelStyle:
-                            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
+                        labelStyle: AppTexts.generalBody.copyWith(
+                            color: AppColors.maindark, fontSize: 16),
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.maindark, width: 1.5),
+                          borderSide: const BorderSide(
+                              color: AppColors.maindark, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.maindark, width: 2),
+                          borderSide: const BorderSide(
+                              color: AppColors.maindark, width: 2),
                         ),
                         suffixIcon: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -166,26 +263,23 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () async {
                           final email = _emailController.text.trim();
                           if (email.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please enter your email first!"),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
+                            _showError("Please enter your email first!", color: Colors.orange);
                             return;
                           }
 
-                          await FirebaseAuth.instance
-                              .sendPasswordResetEmail(email: email);
+                          try {
+                            await FirebaseAuth.instance
+                                .sendPasswordResetEmail(email: email);
 
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    "Password reset link sent! Check your email."),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                            if (context.mounted) {
+                              _showError(
+                                  "Password reset link sent! Check your email.",
+                                  color: Colors.green);
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              _showError("Error: $e");
+                            }
                           }
                         },
                         child: Text(
@@ -200,33 +294,12 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // Login
+                    // Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          UserCredential userCredential =
-                              await FirebaseAuth.instance
-                                  .signInWithEmailAndPassword(
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text.trim(),
-                          );
-
-                          await ProfileSessionService.handleLogin(
-                              userCredential.user!.uid);
-
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => HomePage(
-                                  userId: userCredential.user!.uid,
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.main,
                           shape: RoundedRectangleBorder(
@@ -250,7 +323,7 @@ class _LoginPageState extends State<LoginPage> {
                             .copyWith(color: AppColors.grey)),
                     const SizedBox(height: 15),
 
-                    // Sign up
+                    // Sign up Button
                     SizedBox(
                       width: double.infinity,
                       height: 55,
