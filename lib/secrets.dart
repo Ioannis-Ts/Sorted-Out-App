@@ -1,1 +1,1 @@
-const String Secret = "AIzaSyB9EJG2BoJjdXoIeFkmcrWYoGf4BerKDtI";
+const String Secret = "";
