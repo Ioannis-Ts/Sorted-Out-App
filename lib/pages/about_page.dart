@@ -23,7 +23,7 @@ class AboutPage extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // 🔹 Top bar with back button
+                // 🔹 Top bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -41,11 +41,14 @@ class AboutPage extends StatelessWidget {
                   ),
                 ),
 
-                // 🔹 Content
+                // 🔹 Fixed Yellow Box with Scrolling Text
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                  child: Padding(
+                    // Outer margin (space around the yellow box)
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     child: Container(
+                      width: double.infinity,
+                      // ✅ 1. The Container is now the parent (Fixed Frame)
                       decoration: BoxDecoration(
                         color: AppColors.ourYellow,
                         borderRadius: BorderRadius.circular(24),
@@ -57,39 +60,43 @@ class AboutPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: AboutContent.sections.map((section) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // 🔸 Title
-                                Text(
-                                  section['title'] ?? '',
-                                  style: AppTexts.generalTitle.copyWith(
-                                    fontSize: 20,
-                                  ),
+                      // ✅ 2. The ScrollView is INSIDE the Container
+                      child: ClipRRect(
+                        // Clips the scrolling content to the rounded corners
+                        borderRadius: BorderRadius.circular(24), 
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 24,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: AboutContent.sections.map((section) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      section['title'] ?? '',
+                                      style: AppTexts.generalTitle.copyWith(
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      section['body'] ?? '',
+                                      style: AppTexts.generalBody.copyWith(
+                                        fontSize: 13,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 10),
-
-                                // 🔸 Body
-                                Text(
-                                  section['body'] ?? '',
-                                  style: AppTexts.generalBody.copyWith(
-                                    fontSize: 15,
-                                    height: 1.45,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
                     ),
                   ),

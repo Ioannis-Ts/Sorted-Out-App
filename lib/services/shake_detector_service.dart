@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:vibration/vibration.dart'; // 1. Import the package
 
 class ShakeDetectorService {
   ShakeDetectorService({
     this.onShake,
-    this.thresholdG = 2.7, // 2.2–3.0 συνήθως καλό range
+    this.thresholdG = 2.7,
     this.cooldown = const Duration(seconds: 3),
   });
 
@@ -16,15 +17,13 @@ class ShakeDetectorService {
   StreamSubscription<AccelerometerEvent>? _sub;
   DateTime? _lastShake;
 
-  // Για λίγο πιο “smooth” detection
   double _lastMag = 0.0;
 
   void start() {
-    _sub ??= accelerometerEvents.listen((e) {
-      // magnitude σε "g" περίπου (9.81 m/s^2 = 1g)
+    // 2. Mark the listener as 'async' to allow Vibration calls
+    _sub ??= accelerometerEvents.listen((e) async {
       final mag = sqrt(e.x * e.x + e.y * e.y + e.z * e.z) / 9.81;
 
-      // “jerk” = απότομη αλλαγή magnitude
       final delta = (mag - _lastMag).abs();
       _lastMag = mag;
 
@@ -35,6 +34,14 @@ class ShakeDetectorService {
       // Συνθήκη shake
       if (!inCooldown && (mag > thresholdG || delta > 1.3)) {
         _lastShake = now;
+
+        // 3. Trigger Vibration
+        // Check if device has a motor first to avoid errors
+        if (await Vibration.hasVibrator()) {
+          // Vibrate for 500 milliseconds (half a second)
+          Vibration.vibrate(duration: 500);
+        }
+
         onShake?.call();
       }
     });

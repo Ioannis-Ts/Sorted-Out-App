@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // <--- NEW IMPORT
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../theme/app_variables.dart';
+import '../services/profile_points_store.dart';
+
 import '../widgets/recycle_material_button.dart';
 import '../widgets/points_pill.dart';
 import '../widgets/submit_pill_button.dart';
 import '../widgets/reset_icon_button.dart';
-import '../services/profile_points_store.dart';
+
+class PointsSubmitResult {
+  final int before;
+  final int after;
+
+  const PointsSubmitResult({required this.before, required this.after});
+}
 
 class RecyclePointsPage extends StatefulWidget {
   final String userId;
@@ -22,8 +31,9 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
   final Map<String, int> _itemCounts = {};
 
-  final Map<String, String> _categoryEmojis = {
-    'Plastic': '🧴',
+  // ✅ Emoji map (matches your labels)
+  static const Map<String, String> _emoji = {
+    'Plastic': '🥤',
     'Paper': '📄',
     'Glass': '🍾',
     'Metal': '🥫',
@@ -46,42 +56,62 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
     });
   }
 
+  // ✅ Summary like: "🥤 x2   📄 x1   🔋 x3"
   String _getSummaryText() {
-    const String prefix = "You recycled:";
-    if (_itemCounts.isEmpty) return prefix;
+    if (_itemCounts.isEmpty) return 'No items selected yet.';
+
+    // Keep a stable order (so it doesn't jump around)
+    const order = [
+      'Plastic',
+      'Paper',
+      'Glass',
+      'Metal',
+      'Batteries',
+      'Electronics',
+      'Food',
+    ];
 
     final parts = <String>[];
-    _itemCounts.forEach((key, count) {
-      if (count > 0) {
-        final emoji = _categoryEmojis[key] ?? '';
-        parts.add('${count}x$emoji');
-      }
-    });
+    for (final key in order) {
+      final count = _itemCounts[key] ?? 0;
+      if (count <= 0) continue;
+      final em = _emoji[key] ?? '';
+      parts.add('$em x$count');
+    }
 
-    return "$prefix ${parts.join(' ')}";
+    return parts.isEmpty ? 'No items selected yet.' : parts.join('   ');
   }
 
   Future<void> _submit() async {
     if (_submitting) return;
-
-    // Prevent submitting 0 points
-    if (_sessionPoints == 0) return;
+    if (_sessionPoints <= 0) return;
 
     setState(() => _submitting = true);
 
     try {
-      // 1. Update Personal Profile Points
+      // ✅ Read BEFORE points
+      final profileRef = FirebaseFirestore.instance
+          .collection('Profiles')
+          .doc(widget.userId);
+
+      final beforeSnap = await profileRef.get();
+      final beforePoints =
+          (beforeSnap.data()?['totalpoints'] as num?)?.toInt() ?? 0;
+
+      // ✅ Keep your existing logic: add the points
       await ProfilePointsStore.addPoints(widget.userId, _sessionPoints);
 
-      // 2. Update Global Stats (Stats -> 2025 -> pointscollected)
-      // We use FieldValue.increment to handle concurrent updates safely.
-      await FirebaseFirestore.instance.collection('Stats').doc('2025').update({
-        'pointscollected': FieldValue.increment(_sessionPoints),
-      });
+      // ✅ Read AFTER points
+      final afterSnap = await profileRef.get();
+      final afterPoints =
+          (afterSnap.data()?['totalpoints'] as num?)?.toInt() ?? beforePoints;
 
       if (!mounted) return;
 
-      Navigator.of(context).pop();
+      // ✅ Return result to Home (for the pop-up)
+      Navigator.of(
+        context,
+      ).pop(PointsSubmitResult(before: beforePoints, after: afterPoints));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -113,47 +143,39 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
             ),
           ),
 
-          // Back Arrow (Top Left)
-          Positioned(
-            top: 0,
-            left: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, size: 28),
-                  color: AppColors.textMain,
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          // Content
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                horizontalPadding,
-                72,
-                horizontalPadding,
-                24,
+              padding: const EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'What did you recycle?',
-                    style: AppTexts.generalTitle.copyWith(fontSize: 20),
+                  const SizedBox(height: 16),
+
+                  // Top row: title + reset
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Recycle Points",
+                        style: AppTexts.generalTitle.copyWith(
+                          fontSize: 22,
+                          color: AppColors.textMain,
+                        ),
+                      ),
+                      ResetIconButton(onTap: _resetPoints),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Choose a material type:',
-                    style: AppTexts.generalBody.copyWith(fontSize: 14),
-                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Points pill (center)
+                  Center(child: PointsPill(points: _sessionPoints)),
+
                   const SizedBox(height: 18),
 
+                  // Buttons grid
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -207,6 +229,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
                   ),
 
                   const SizedBox(height: 18),
+
                   Align(
                     alignment: Alignment.center,
                     child: RecycleMaterialButton(
@@ -218,6 +241,7 @@ class _RecyclePointsPageState extends State<RecyclePointsPage> {
 
                   const SizedBox(height: 26),
 
+                  // Summary row (emoji x count)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [

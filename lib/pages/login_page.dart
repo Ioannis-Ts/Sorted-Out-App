@@ -3,6 +3,7 @@ import 'signup_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_page.dart';
 import '../services/profile_session_service.dart';
+import '../theme/app_variables.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,17 +20,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Το βασικό background πίσω από όλα (αν φαίνεται κάπου κενό)
-      backgroundColor: const Color(0xFFFFF9E6), 
+      backgroundColor: const Color(0xFFFFF9E6),
       body: Column(
         children: [
-          // --- ΤΜΗΜΑ 1: Header (Μωβ) ---
+          // HEADER
           Container(
             height: 220,
             width: double.infinity,
             padding: const EdgeInsets.only(left: 25, bottom: 20),
             decoration: const BoxDecoration(
-              color: Color(0xFF95A0FF), // Το χαρακτηριστικό μωβ/λουλακί
+              color: Color(0xFF95A0FF),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -38,14 +38,14 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   "Welcome back 👋",
-                  style: TextStyle(
+                  style: AppTexts.generalTitle.copyWith(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // Λευκό κείμενο για αντίθεση
-                    shadows: [
+                    color: Colors.white,
+                    shadows: const [
                       Shadow(
                         offset: Offset(0, 2),
                         blurRadius: 4,
@@ -54,52 +54,54 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   "Login or create an account.",
-                  style: TextStyle(
-                    color: Colors.white, // Καθαρό λευκό
+                  style: AppTexts.generalBody.copyWith(
                     fontSize: 16,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
           ),
 
-          // --- ΤΜΗΜΑ 2: Η φόρμα (Κρεμ φόντο) ---
+          // FORM
           Expanded(
             child: Container(
-              color: const Color(0xFFFFF9E6), // Το κρεμ χρώμα της εικόνας σου
+              color: AppColors.ourYellow,
               padding: const EdgeInsets.symmetric(horizontal: 25.0),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
 
-                    // Email Field
+                    // Email
                     TextField(
                       controller: _emailController,
-                      style: const TextStyle(color: Colors.black87),
+                      style: AppTexts.generalBody.copyWith(color: Colors.black87),
                       decoration: InputDecoration(
                         labelText: "Email",
-                        // Μωβ χρώμα στο label όταν είναι ενεργό
-                        labelStyle: const TextStyle(color: Color(0xFF5E35B1)), 
+                        labelStyle:
+                            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
                         filled: true,
-                        fillColor: Colors.white, // Λευκό μέσα στο κουτάκι
-                        // Το μωβ περίγραμμα
+                        fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF7E57C2), width: 1.5),
+                          borderSide:
+                              const BorderSide(color: AppColors.maindark, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF5E35B1), width: 2),
+                          borderSide:
+                              const BorderSide(color: AppColors.maindark, width: 2),
                         ),
                         suffixIcon: IconButton(
-                          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                          icon: const Icon(Icons.cancel_outlined,
+                              color: AppColors.grey),
                           onPressed: () {
                             _emailController.clear();
-                            setState(() {}); // για να ανανεωθεί το TextField
+                            setState(() {});
                           },
                         ),
                       ),
@@ -107,33 +109,36 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 25),
 
-                    // Password Field
+                    // Password
                     TextField(
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
-                      style: const TextStyle(color: Colors.black87),
+                      style: AppTexts.generalBody.copyWith(color: Colors.black87),
                       decoration: InputDecoration(
                         labelText: "Password",
-                        labelStyle: const TextStyle(color: Color(0xFF5E35B1)),
+                        labelStyle:
+                            AppTexts.generalBody.copyWith(color: AppColors.maindark, fontSize: 16),
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF7E57C2), width: 1.5),
+                          borderSide:
+                              const BorderSide(color: AppColors.maindark, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF5E35B1), width: 2),
+                          borderSide:
+                              const BorderSide(color: AppColors.maindark, width: 2),
                         ),
                         suffixIcon: Row(
-                          mainAxisSize: MainAxisSize.min, // Σημαντικό για να μην πιάνει όλο το χώρο
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: Icon(
                                 _isPasswordVisible
                                     ? Icons.visibility
                                     : Icons.visibility_off,
-                                color: Colors.grey[700],
+                                color: AppColors.grey,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -141,15 +146,13 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                               },
                             ),
-                             Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
-                                onPressed: () {
-                                  _passwordController.clear();
-                                  setState(() {});
-                                },
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.cancel_outlined,
+                                  color: AppColors.grey),
+                              onPressed: () {
+                                _passwordController.clear();
+                                setState(() {});
+                              },
                             ),
                           ],
                         ),
@@ -157,117 +160,84 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     // Forgot password
-// Forgot password button logic
-Align(
-  alignment: Alignment.centerLeft,
-  child: TextButton(
-    onPressed: () async {
-      // 1. Παίρνουμε το email από το πεδίο που γράφει ο χρήστης
-      final email = _emailController.text.trim();
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () async {
+                          final email = _emailController.text.trim();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please enter your email first!"),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
 
-      // 2. Αν είναι κενό, του φωνάζουμε λίγο!
-      if (email.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please enter your email first!"),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
+                          await FirebaseAuth.instance
+                              .sendPasswordResetEmail(email: email);
 
-      // 3. Στέλνουμε το email επαναφοράς
-      try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-        
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Password reset link sent! Check your email."),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        // Αν κάτι πάει στραβά (π.χ. δεν υπάρχει το email)
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message ?? "Error sending reset email"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    },
-    child: Text(
-      "Forgot your password?",
-      style: TextStyle(color: Colors.grey[700]),
-    ),
-  ),
-),
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    "Password reset link sent! Check your email."),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                        child: Text(
+                          "Forgot your password?",
+                          style: AppTexts.generalBody.copyWith(
+                            fontSize: 16,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 20),
 
-                    // Login Button
+                    // Login
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
                         onPressed: () async {
-  try {
-      // ... κώδικας login ...
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+                          UserCredential userCredential =
+                              await FirebaseAuth.instance
+                                  .signInWithEmailAndPassword(
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text.trim(),
+                          );
 
-      // 🧠 ΕΔΩ γίνεται ΟΛΗ η λογική reset / lastlogin
-      await ProfileSessionService.handleLogin(userCredential.user!.uid,);
+                          await ProfileSessionService.handleLogin(
+                              userCredential.user!.uid);
 
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(
-              userId: userCredential.user!.uid,
-            ),
-          ),
-        );
-      }
-
-  } on FirebaseAuthException catch (e) {
-    // Αν γίνει λάθος (λάθος κωδικός ή email)
-    String message = "Login failed";
-    if (e.code == 'user-not-found') {
-      message = 'No user found for that email.';
-    } else if (e.code == 'wrong-password') {
-      message = 'Wrong password provided.';
-    }
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red, // Κόκκινο για το λάθος
-        ),
-      );
-    }
-  }
-},
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => HomePage(
+                                  userId: userCredential.user!.uid,
+                                ),
+                              ),
+                            );
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF95A0FF), // Ίδιο μωβ με το header
-                          elevation: 2,
+                          backgroundColor: AppColors.main,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25), // Πιο στρογγυλεμένες γωνίες όπως στην εικόνα
+                            borderRadius: BorderRadius.circular(25),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Login",
-                          style: TextStyle(
+                          style: AppTexts.generalBody.copyWith(
                             fontSize: 18,
-                            color: Colors.white, // Λευκά γράμματα
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -275,10 +245,12 @@ Align(
                     ),
 
                     const SizedBox(height: 15),
-                    const Text("or", style: TextStyle(color: Colors.grey)),
+                    Text("or",
+                        style: AppTexts.generalBody
+                            .copyWith(color: AppColors.grey)),
                     const SizedBox(height: 15),
 
-                    // Sign Up Button
+                    // Sign up
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -286,19 +258,19 @@ Align(
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SignupPage()),
-                         );
+                            MaterialPageRoute(
+                                builder: (_) => const SignupPage()),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF95A0FF), // Ίδιο μωβ
-                          elevation: 2,
+                          backgroundColor: AppColors.main,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Sign Up",
-                          style: TextStyle(
+                          style: AppTexts.generalBody.copyWith(
                             fontSize: 18,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

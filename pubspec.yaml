@@ -40,10 +40,16 @@ dependencies:
   google_maps_flutter: ^2.14.0
   sensors_plus: ^6.0.0
   http: ^1.2.0
+  geolocator: ^14.0.2
+  geolocator_web: ^4.1.2
+  audioplayers: ^6.5.1
+  vibration: ^3.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -61,6 +67,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/sounds/
 
   fonts:
     - family: IstokWeb
@@ -100,3 +107,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: assets/images/app_icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#FFFFFF"
+  image_path: assets/images/app_icon.png

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_variables.dart';
-import '../pages/home_page.dart'; // <--- Χρειαζόμαστε το HomePage
-// import '../pages/ai_assistant_page.dart'; // Αν έχεις τη σελίδα AI, βγάλε το σχόλιο
-// import '../pages/map_page.dart'; // Αν έχεις τη σελίδα Map, βγάλε το σχόλιο
+import '../pages/home_page.dart';
 
 class MainNavBar extends StatelessWidget {
   final int? currentIndex; 
@@ -40,7 +38,7 @@ class MainNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 67,
+      height: 50,
       decoration: BoxDecoration(
         color: AppColors.main.withOpacity(0.8),
         boxShadow: [
@@ -104,8 +102,8 @@ class _NavItem extends StatelessWidget {
       onTap: () => onTap(index),
       child: Image.asset(
         isActive ? pressedAsset : notPressedAsset,
-        width: 64,
-        height: 64,
+        width: 50,
+        height: 50,
         errorBuilder: (context, error, stackTrace) => const Icon(Icons.error), // Αν λείπει η εικόνα
       ),
     );

@@ -12,6 +12,7 @@ class AppColors {
   // ======== MAIN BRAND COLORS (από Figma) ========
 
   static const Color main = Color(0xFF8B99FF);
+  static const Color maindark = Color(0xFF5E35B1);
   static const Color grey = Color(0xFF777070);
   static const Color grey2 = Color.fromARGB(255, 82, 76, 76);
   static const Color lightGrey = Color(0xFFEAEAEA);
